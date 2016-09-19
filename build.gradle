@@ -1,0 +1,15 @@
+group 'io.duna'
+version '1.0-SNAPSHOT'
+
+configure (allprojects) {
+  apply plugin: 'idea'
+  apply plugin: 'eclipse'
+
+  repositories {
+    jcenter()
+  }
+}
+
+configure (subprojects) {
+  apply plugin: 'java'
+}
