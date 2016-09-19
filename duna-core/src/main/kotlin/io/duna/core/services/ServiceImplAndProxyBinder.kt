@@ -3,6 +3,8 @@ package io.duna.core.services
 import com.google.inject.AbstractModule
 import io.github.lukehutch.fastclasspathscanner.scanner.ScanResult
 import net.bytebuddy.ByteBuddy
+import net.bytebuddy.implementation.MethodDelegation
+import net.bytebuddy.matcher.ElementMatchers
 
 class ServiceImplAndProxyBinder(val scanResult: ScanResult) : AbstractModule() {
   override fun configure() {
@@ -27,7 +29,14 @@ class ServiceImplAndProxyBinder(val scanResult: ScanResult) : AbstractModule() {
     bind(iface).to(implClass)
   }
 
-  private fun createAndBindProxy(iface: Class<*>) {
+  private fun createAndBindProxy(iface: Class<*>): Class<*> {
     val proxyClass = ByteBuddy()
+        .subclass(iface)
+        .method(ElementMatchers.isDeclaredBy(iface)).intercept(MethodDelegation.to(ServiceCallInterceptor))
+        .make()
+        .load(javaClass.getClassLoader())
+        .loaded
+
+    return proxyClass
   }
 }
