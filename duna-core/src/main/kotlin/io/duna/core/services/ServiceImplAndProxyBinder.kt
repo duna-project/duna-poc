@@ -1,10 +1,10 @@
 package io.duna.core.services
 
 import com.google.inject.AbstractModule
+import io.duna.net.bytebuddy.ByteBuddy
+import io.duna.net.bytebuddy.implementation.MethodDelegation
+import io.duna.net.bytebuddy.matcher.ElementMatchers
 import io.github.lukehutch.fastclasspathscanner.scanner.ScanResult
-import net.bytebuddy.ByteBuddy
-import net.bytebuddy.implementation.MethodDelegation
-import net.bytebuddy.matcher.ElementMatchers
 
 class ServiceImplAndProxyBinder(val scanResult: ScanResult) : AbstractModule() {
   override fun configure() {

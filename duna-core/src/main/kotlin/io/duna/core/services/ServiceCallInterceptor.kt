@@ -1,9 +1,8 @@
 package io.duna.core.services
 
-import io.vertx.core.Vertx
-import net.bytebuddy.implementation.bind.annotation.AllArguments
-import net.bytebuddy.implementation.bind.annotation.Origin
-import net.bytebuddy.jar.asm.commons.Method
+import io.duna.net.bytebuddy.implementation.bind.annotation.AllArguments
+import io.duna.net.bytebuddy.implementation.bind.annotation.Origin
+import java.lang.reflect.Method
 
 object ServiceCallInterceptor {
 
