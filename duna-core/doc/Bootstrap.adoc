@@ -1,0 +1,9 @@
+# Processo de Bootstrap
+
+O processo de bootstrap do Duna é responsável por detectar os
+serviços presentes no nó a ser implantado e as implementações
+disponíveis, além de iniciar os serviços de suporte básico.
+
+O fluxo de inicialização segue o processo demonstrado na
+figura abaixo:
+

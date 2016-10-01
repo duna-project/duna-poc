@@ -7,7 +7,7 @@ import io.vertx.core.Future
 import io.vertx.core.Verticle
 import javax.inject.Inject
 
-class BootstrapVerticle : AbstractVerticle() {
+class MainVerticle : AbstractVerticle() {
 
   @Inject
   lateinit var verticles: Set<Verticle>

@@ -1,4 +1,4 @@
-package io.duna.core.services
+package io.duna.core.service
 
 import com.google.inject.AbstractModule
 import com.google.inject.multibindings.Multibinder
