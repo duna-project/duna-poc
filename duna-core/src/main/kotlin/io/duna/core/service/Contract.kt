@@ -1,6 +1,6 @@
 package io.duna.core.service
 
+@MustBeDocumented
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
-@MustBeDocumented
-annotation class ServiceVerticleAnn
+annotation class Contract

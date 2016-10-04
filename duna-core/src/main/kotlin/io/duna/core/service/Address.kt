@@ -1,6 +1,6 @@
 package io.duna.core.service
 
+@MustBeDocumented
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
-@MustBeDocumented
-annotation class Address(val address: String)
+annotation class Address(val value: String)
