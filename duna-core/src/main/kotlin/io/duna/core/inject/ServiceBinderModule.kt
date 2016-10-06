@@ -8,6 +8,8 @@ import io.duna.core.service.Service
 import io.github.lukehutch.fastclasspathscanner.scanner.ScanResult
 import net.bytebuddy.ByteBuddy
 import net.bytebuddy.description.annotation.AnnotationDescription
+import net.bytebuddy.implementation.MethodDelegation
+import net.bytebuddy.matcher.ElementMatchers
 import org.apache.logging.log4j.LogManager
 import java.lang.reflect.Modifier
 import java.net.URLClassLoader
@@ -59,14 +61,16 @@ class ServiceBinderModule(val scanResult: ScanResult) : AbstractModule() {
 
   private fun createAndBindProxy(service: Class<*>) {
     val proxyClass = ByteBuddy()
-      .subclass(Any::class.java)
-      .implement(service)
-      .annotateType(AnnotationDescription.Builder
-          .ofType(Service::class.java)
-          .build())
-      .make()
-      .load(proxyClassLoader)
-      .loaded
+        .subclass(Any::class.java)
+        .implement(service)
+        .annotateType(AnnotationDescription.Builder
+            .ofType(Service::class.java)
+            .build())
+//        .method(ElementMatchers.isDeclaredBy(service))
+//            .to(MethodDelegation.to())
+        .make()
+        .load(proxyClassLoader)
+        .loaded
 
     val typeLiteral = ManualTypeLiteral(service)
 

@@ -4,6 +4,7 @@ plugins {
 
 configurations {
   quasar
+  asm
 }
 
 ext {
@@ -30,6 +31,11 @@ dependencies {
   compile 'org.msgpack:jackson-dataformat-msgpack:0.8.10'
 
   compile 'io.github.lukehutch:fast-classpath-scanner:2.0.3'
+
+  asm group: 'org.ow2.asm', name: 'asm', version: asmVersion
+  asm group: 'com.googlecode.jarjar', name: 'jarjar', version: '1.3'
+
+  compile files("${project.getBuildDir()}/asm-${asmVersion}.patched.jar")
 
   quasar 'co.paralleluniverse:quasar-core:0.7.6:jdk8'
 }
@@ -61,3 +67,45 @@ task runApp(type: JavaExec) {
 
   main = 'Test'
 }
+
+project.ext.set("shouldBuildPatch", {
+  !(new File("${project.buildDir}/asm-${asmVersion}.patched.jar").exists())
+})
+
+/**
+ * Copies the patch configuration's dependencies to a lib directory for processing.
+ */
+task downloadPatchLibs(type: Copy) {
+  into("${project.getBuildDir()}/lib")
+  from(configurations.asm)
+  exclude('jarjar*')
+  duplicatesStrategy(DuplicatesStrategy.EXCLUDE)
+}
+
+downloadPatchLibs.doFirst {
+  if (!shouldBuildPatch()) { throw new StopExecutionException() }
+}
+
+def buildDir = project.getBuildDir()
+
+/**
+ * Takes the raw asm and byte-buddy dependencies, prefix the packages with
+ * io.duna, and combines both the jars' modified classes into a single jar file.
+ */
+//noinspection GroovyAssignabilityCheck
+task applyPatchToDependencies(dependsOn: 'downloadPatchLibs') << {
+  project.ant {
+    taskdef name: "jarjar", classname: "com.tonicsystems.jarjar.JarJarTask", classpath: configurations.asm.asPath
+    jarjar(jarfile: "${buildDir}/asm-${asmVersion}.patched.jar", filesetmanifest: "merge") {
+      zipgroupfileset(dir: "${buildDir}/lib", includes: '*.jar')
+
+      rule pattern: "org.objectweb.asm.**", result: "io.duna.asm.@1"
+    }
+  }
+}
+compileKotlin.dependsOn(applyPatchToDependencies)
+
+task cleanPatchedLibs(type: Delete) {
+  delete "${project.getBuildDir()}/lib"
+}
+clean.dependsOn(cleanPatchedLibs)
