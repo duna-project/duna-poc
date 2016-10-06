@@ -3,27 +3,27 @@ package io.duna.core.inject
 import com.google.inject.AbstractModule
 import com.google.inject.BindingAnnotation
 import com.google.inject.ManualTypeLiteral
+import com.google.inject.Scopes
+import io.duna.core.proxy.ProxyClassLoader
+import io.duna.core.proxy.ServiceProxyFactory
 import io.duna.core.service.Contract
 import io.duna.core.service.Service
 import io.github.lukehutch.fastclasspathscanner.scanner.ScanResult
-import net.bytebuddy.ByteBuddy
-import net.bytebuddy.description.annotation.AnnotationDescription
 import org.apache.logging.log4j.LogManager
 import java.lang.reflect.Modifier
-import java.net.URLClassLoader
 import javax.inject.Qualifier
 
 class ServiceBinderModule(val scanResult: ScanResult) : AbstractModule() {
 
   private val logger = LogManager.getLogger(ServiceBinderModule::class.java)
 
-  private val proxyClassLoader = URLClassLoader(null, javaClass.classLoader)
+  private val proxyClassLoader = ProxyClassLoader(javaClass.classLoader, ServiceProxyFactory())
 
   override fun configure() {
     logger.info("Registering services.")
 
     getServiceInterfaces().forEach {
-      logger.info("Registering service ${it.canonicalName}")
+      logger.info("Registering serviceClass ${it.canonicalName}")
 
       val implementations = scanResult.getNamesOfClassesImplementing(it.canonicalName).map { Class.forName(it) }
 
@@ -35,19 +35,19 @@ class ServiceBinderModule(val scanResult: ScanResult) : AbstractModule() {
   }
 
   @Suppress("UNCHECKED_CAST")
-  private fun bindImplementations(service: Class<*>) {
-    getServiceImplementations(service).forEach { implementation ->
+  private fun bindImplementations(serviceClass: Class<*>) {
+    getServiceImplementations(serviceClass).forEach { implementation ->
       val qualifier = implementation.declaredAnnotations.filter {
         it.annotationClass.java.isAnnotationPresent(Qualifier::class.java) ||
             it.javaClass.isAnnotationPresent(BindingAnnotation::class.java)
       }.singleOrNull()
 
-      val typeLiteral = ManualTypeLiteral(service)
+      val typeLiteral = ManualTypeLiteral(serviceClass)
 
       if (qualifier == null) {
         bind(typeLiteral)
-          .to(implementation)
-          .asEagerSingleton()
+            .to(implementation)
+            .asEagerSingleton()
       } else {
         bind(typeLiteral)
             .annotatedWith(qualifier)
@@ -57,22 +57,14 @@ class ServiceBinderModule(val scanResult: ScanResult) : AbstractModule() {
     }
   }
 
-  private fun createAndBindProxy(service: Class<*>) {
-    val proxyClass = ByteBuddy()
-      .subclass(Any::class.java)
-      .implement(service)
-      .annotateType(AnnotationDescription.Builder
-          .ofType(Service::class.java)
-          .build())
-      .make()
-      .load(proxyClassLoader)
-      .loaded
+  private fun createAndBindProxy(serviceClass: Class<*>) {
+    val proxyClass = proxyClassLoader.proxyForService(serviceClass)
+    val typeLiteral = ManualTypeLiteral(proxyClass)
 
-    val typeLiteral = ManualTypeLiteral(service)
-
-    bind(typeLiteral)
-      .to(proxyClass)
-      .asEagerSingleton()
+    // Should bind to instance
+//    bind(typeLiteral)
+//        .to(proxyClass)
+//        .`in`(Scopes.SINGLETON)
   }
 
   private fun getServiceInterfaces(): List<Class<*>> {
