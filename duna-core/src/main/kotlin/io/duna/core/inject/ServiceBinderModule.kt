@@ -62,9 +62,9 @@ class ServiceBinderModule(val scanResult: ScanResult) : AbstractModule() {
     val typeLiteral = ManualTypeLiteral(proxyClass)
 
     // Should bind to instance
-//    bind(typeLiteral)
-//        .to(proxyClass)
-//        .`in`(Scopes.SINGLETON)
+    bind(typeLiteral)
+        .to(proxyClass)
+        .`in`(Scopes.SINGLETON)
   }
 
   private fun getServiceInterfaces(): List<Class<*>> {

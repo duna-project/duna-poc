@@ -1,5 +1,6 @@
 package io.duna.core.proxy
 
+import co.paralleluniverse.fibers.Suspendable
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.core.JsonParser
@@ -7,10 +8,10 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import io.duna.asm.*
 import io.duna.asm.Opcodes.*
 import io.duna.asm.Type.*
-import io.duna.asm.util.TraceClassVisitor
 import io.duna.core.io.BufferInputStream
 import io.duna.core.io.BufferOutputStream
 import io.duna.core.proxy.internal.DefaultServiceProxyNamingStrategy
+import io.duna.core.service.Address
 import io.vertx.core.Handler
 import io.vertx.core.Vertx
 import io.vertx.core.buffer.Buffer
@@ -19,7 +20,6 @@ import io.vertx.core.eventbus.Message
 import io.vertx.ext.sync.Sync
 import java.io.InputStream
 import java.io.OutputStream
-import java.io.PrintWriter
 import java.lang.invoke.LambdaMetafactory
 import java.lang.invoke.MethodHandles
 import java.lang.reflect.Method
@@ -37,6 +37,9 @@ class ServiceProxyFactory(val namingStrategy: ServiceProxyNamingStrategy) {
 
   /**
    * Generates a binary JVM class proxying methods from the remote instance of a service.
+   *
+   * @param serviceClass the class of the service to be proxied.
+   * @return the binary representation of the service proxy class.
    */
   fun generateFor(serviceClass: Class<*>): ByteArray {
     val cw = ClassWriter(0)
@@ -46,6 +49,9 @@ class ServiceProxyFactory(val namingStrategy: ServiceProxyNamingStrategy) {
     val proxyClassName = namingStrategy.getProxyClassName(serviceClass)
     val proxyClassInternalName = proxyClassName.replace('.', '/')
     val proxyClassDescriptor = "L${proxyClassInternalName};"
+
+    val serviceAddress = serviceClass.getAnnotation(Address::class.java)?.value
+        ?: serviceClass.canonicalName
 
     var fv: FieldVisitor
     var mv: MethodVisitor
@@ -64,9 +70,10 @@ class ServiceProxyFactory(val namingStrategy: ServiceProxyNamingStrategy) {
 
     run {
       fv = cv.visitField(ACC_PRIVATE, "vertx",
-          getDescriptor(Vertx::class.java), null, null)
+          getDescriptor(Vertx::class.java),
+          getDescriptor(Vertx::class.java), null)
 
-      av0 = fv.visitAnnotation(getInternalName(Inject::class.java), true)
+      av0 = fv.visitAnnotation(getDescriptor(Inject::class.java), true)
       av0.visitEnd()
 
       fv.visitEnd()
@@ -74,54 +81,38 @@ class ServiceProxyFactory(val namingStrategy: ServiceProxyNamingStrategy) {
 
     run {
       fv = cv.visitField(ACC_PRIVATE, "objectMapper",
-          getDescriptor(ObjectMapper::class.java), null, null)
+          getDescriptor(ObjectMapper::class.java),
+          getDescriptor(ObjectMapper::class.java),
+          null)
 
-      av0 = fv.visitAnnotation(getInternalName(Inject::class.java), true)
+      av0 = fv.visitAnnotation(getDescriptor(Inject::class.java), true)
       av0.visitEnd()
 
       fv.visitEnd()
     }
 
-    run {
-      fv = cv.visitField(ACC_PRIVATE + ACC_FINAL, "address",
-          getDescriptor(String::class.java), null, null)
-      fv.visitEnd()
-    }
-
     // Constructor
     run {
-      mv = cv.visitMethod(0, "<init>",
-          "(${getDescriptor(String::class.java)})V", null, null)
+      mv = cv.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null)
       mv.visitCode()
 
       val l0 = Label()
       mv.visitLabel(l0)
       mv.visitVarInsn(ALOAD, 0)
-      mv.visitMethodInsn(INVOKESPECIAL, getInternalName(Any::class.java), "<init>", "()V", false)
+      mv.visitMethodInsn(INVOKESPECIAL, getInternalName(Any::class.javaObjectType), "<init>", "()V", false)
+      mv.visitInsn(RETURN)
 
       val l1 = Label()
       mv.visitLabel(l1)
-      mv.visitVarInsn(ALOAD, 0)
-      mv.visitVarInsn(ALOAD, 1)
-      mv.visitFieldInsn(PUTFIELD, proxyClassInternalName, "address", getDescriptor(String::class.java))
+      mv.visitLocalVariable("this", proxyClassDescriptor, null, l0, l1, 0)
 
-      val l2 = Label()
-      mv.visitLabel(l2)
-      mv.visitInsn(RETURN)
-
-      val l3 = Label()
-      mv.visitLabel(l3)
-      mv.visitLocalVariable("this", proxyClassDescriptor, null, l0, l3, 0)
-      mv.visitLocalVariable("address",
-          getDescriptor(String::class.java), null, l0, l3, 1)
-
-      mv.visitMaxs(2, 2)
+      mv.visitMaxs(1, 1)
       mv.visitEnd()
     }
 
     serviceClass.methods.forEachIndexed { i, method ->
       generateMethod(cv, proxyClassInternalName, proxyClassDescriptor, i, method)
-      generateMethodLambdaCall(cv, proxyClassInternalName, proxyClassDescriptor, i)
+      generateMethodLambdaCall(cv, proxyClassInternalName, proxyClassDescriptor, serviceAddress, i)
     }
 
     cv.visitEnd()
@@ -132,14 +123,16 @@ class ServiceProxyFactory(val namingStrategy: ServiceProxyNamingStrategy) {
   private fun generateMethodLambdaCall(classVisitor: ClassVisitor,
                                        proxyClassInternalName: String,
                                        proxyClassDescriptor: String,
+                                       serviceAddress: String,
                                        idx: Int) {
     val mv = classVisitor.visitMethod(ACC_PRIVATE + ACC_SYNTHETIC,
         "lambda\$call\$${idx}",
         "(${getDescriptor(BufferOutputStream::class.java)}${getDescriptor(Handler::class.java)})V",
         null, null)
 
-    val lstart = Label()
     mv.visitCode()
+
+    val lstart = Label()
     mv.visitLabel(lstart)
 
     mv.visitVarInsn(ALOAD, 0)
@@ -149,9 +142,7 @@ class ServiceProxyFactory(val namingStrategy: ServiceProxyNamingStrategy) {
         getMethodDescriptor(Vertx::class.java.getMethod("eventBus")),
         true)
 
-    mv.visitVarInsn(ALOAD, 0)
-    mv.visitFieldInsn(GETFIELD, proxyClassInternalName, "address", getDescriptor(String::class.java))
-
+    mv.visitLdcInsn(serviceAddress);
     mv.visitVarInsn(ALOAD, 1)
     mv.visitMethodInsn(INVOKEVIRTUAL, getInternalName(BufferOutputStream::class.java),
         "getBuffer",
@@ -187,6 +178,7 @@ class ServiceProxyFactory(val namingStrategy: ServiceProxyNamingStrategy) {
                              proxyClassDescriptor: String,
                              idx: Int,
                              method: Method) {
+
     // the reference to *this* is stored at index 0
     var firstNonParameterLocalVar = 1
 
@@ -203,6 +195,9 @@ class ServiceProxyFactory(val namingStrategy: ServiceProxyNamingStrategy) {
         getMethodDescriptor(method),
         null, // signature
         null)
+
+    val an = mv.visitAnnotation(getDescriptor(Suspendable::class.java), true)
+    an.visitEnd()
 
     mv.visitCode()
 
@@ -280,10 +275,13 @@ class ServiceProxyFactory(val namingStrategy: ServiceProxyNamingStrategy) {
 
     mv.visitVarInsn(ALOAD, 0)
     mv.visitVarInsn(ALOAD, localVar(0))
+
     // Call the remote serviceClass and wait for the result
+    val llambda = Label()
+    mv.visitLineNumber(50, llambda)
     mv.visitInvokeDynamicInsn("accept",
         "(${proxyClassDescriptor}${getDescriptor(BufferOutputStream::class.java)})${getDescriptor(Consumer::class.java)}",
-        Handle(H_INVOKESTATIC, getInternalName(LambdaMetafactory::class.java), "metaFactory",
+        Handle(H_INVOKESTATIC, getInternalName(LambdaMetafactory::class.java), "metafactory",
             "(Ljava/lang/invoke/MethodHandles\$Lookup;" +
                 "Ljava/lang/String;Ljava/lang/invoke/MethodType;" +
                 "Ljava/lang/invoke/MethodType;" +
@@ -297,6 +295,7 @@ class ServiceProxyFactory(val namingStrategy: ServiceProxyNamingStrategy) {
             false),
         Type.getType("(Lio/vertx/core/Handler;)V")
     )
+
     mv.visitMethodInsn(INVOKESTATIC, getInternalName(Sync::class.java),
         "awaitResult",
         getMethodDescriptor(Sync::class.java.getMethod("awaitResult", Consumer::class.java)),

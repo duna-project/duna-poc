@@ -1,6 +1,15 @@
-plugins {
-  id 'nebula.kotlin' version '1.0.3'
+buildscript {
+  repositories { jcenter() }
+  dependencies {
+    classpath "org.jetbrains.dokka:dokka-gradle-plugin:0.9.9"
+  }
 }
+
+plugins {
+  id 'nebula.kotlin' version '1.0.4'
+}
+
+apply plugin: 'org.jetbrains.dokka'
 
 configurations {
   quasar
@@ -8,7 +17,7 @@ configurations {
 }
 
 ext {
-  byteBuddyVersion = "1.4.27"
+  byteBuddyVersion = "1.4.32"
   asmVersion = "5.1"
 }
 
@@ -34,12 +43,8 @@ dependencies {
 
   compile files("${projectDir}/lib/asm-${asmVersion}.patched.jar")
 
-  testCompile 'org.junit.platform:junit-platform-engine:1.0.0-M2'
-  testCompile 'org.junit.platform:junit-platform-runner:1.0.0-M2'
-
   testCompile 'org.junit.jupiter:junit-jupiter-api:5.0.0-M2'
   testCompile 'org.junit.jupiter:junit-jupiter-engine:5.0.0-M2'
-  testCompile 'io.vertx:vertx-unit:3.3.3'
 
   asm group: 'org.ow2.asm', name: 'asm', version: asmVersion
   asm group: 'org.ow2.asm', name: 'asm-util', version: asmVersion
@@ -72,13 +77,13 @@ tasks.withType(JavaExec) {
 }
 
 task runApp(type: JavaExec) {
-  classpath = sourceSets.main.runtimeClasspath
+  classpath = sourceSets.test.runtimeClasspath
 
-  main = 'Test'
+  main = 'io.duna.vertx.Test'
 }
 
 project.ext.set("shouldBuildPatch", {
-  !(new File("${projectDir}/lib/asm-${asmVersion}.patched.jar").exists())
+  !file("${project.projectDir}/lib/asm-${asmVersion}.patched.jar").exists()
 })
 
 /**
@@ -101,12 +106,14 @@ downloadPatchLibs.doFirst {
  */
 //noinspection GroovyAssignabilityCheck
 task applyPatchToDependencies(dependsOn: 'downloadPatchLibs') << {
-  project.ant {
-    taskdef name: "jarjar", classname: "com.tonicsystems.jarjar.JarJarTask", classpath: configurations.asm.asPath
-    jarjar(jarfile: "${projectDir}/lib/asm-${asmVersion}.patched.jar", filesetmanifest: "merge") {
-      zipgroupfileset(dir: "${projectDir}/lib", includes: '*.jar')
+  if (shouldBuildPatch) {
+    project.ant {
+      taskdef name: "jarjar", classname: "com.tonicsystems.jarjar.JarJarTask", classpath: configurations.asm.asPath
+      jarjar(jarfile: "${projectDir}/lib/asm-${asmVersion}.patched.jar", filesetmanifest: "merge") {
+        zipgroupfileset(dir: "${projectDir}/lib", includes: '*.jar', excludes: '*.patched.jar')
 
-      rule pattern: "org.objectweb.asm.**", result: "io.duna.asm.@1"
+        rule pattern: "org.objectweb.asm.**", result: "io.duna.asm.@1"
+      }
     }
   }
 }

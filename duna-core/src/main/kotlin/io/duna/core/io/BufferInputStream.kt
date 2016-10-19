@@ -29,7 +29,8 @@ class BufferInputStream(val buffer: Buffer) : InputStream() {
   }
 
   override fun read(b: ByteArray?, off: Int, len: Int): Int {
-    buffer.getBytes(off, off + len, b)
+    println(b?.size)
+    buffer.getBytes(off, Math.min(off + len - 1, buffer.length()), b)
     return b?.size ?: 0
   }
 
