@@ -50,12 +50,8 @@ public class SampleServiceProxy implements SampleService {
             generator.writeEndArray();
             generator.flush();
 
-            Message<Buffer> response = awaitResult(new Consumer<Handler<AsyncResult<Message<Buffer>>>>() {
-                @Override
-                public void accept(Handler<AsyncResult<Message<Buffer>>> h) {
-                    vertx.eventBus().send("address", outputStream.getBuffer(), h);
-                }
-            });
+            Message<Buffer> response = awaitResult(h ->
+                    vertx.eventBus().send("address", outputStream.getBuffer(), h));
 
             final BufferInputStream inputStream = new BufferInputStream(response.body());
             final JsonParser parser = objectMapper.getFactory().createParser(inputStream);

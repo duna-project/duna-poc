@@ -48,6 +48,7 @@ dependencies {
 
   asm group: 'org.ow2.asm', name: 'asm', version: asmVersion
   asm group: 'org.ow2.asm', name: 'asm-util', version: asmVersion
+  asm group: 'org.ow2.asm', name: 'asm-commons', version: asmVersion
   asm group: 'com.googlecode.jarjar', name: 'jarjar', version: '1.3'
 
 
@@ -120,6 +121,6 @@ task applyPatchToDependencies(dependsOn: 'downloadPatchLibs') << {
 compileKotlin.dependsOn(applyPatchToDependencies)
 
 task cleanPatchedLibs(type: Delete) {
-  delete "${project.getBuildDir()}/lib"
+  delete "${projectDir}/lib"
 }
 clean.dependsOn(cleanPatchedLibs)
