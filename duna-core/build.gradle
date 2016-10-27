@@ -17,7 +17,7 @@ configurations {
 }
 
 ext {
-  byteBuddyVersion = "1.4.32"
+  byteBuddyVersion = "1.5.0"
   asmVersion = "5.1"
 }
 
@@ -45,10 +45,12 @@ dependencies {
 
   testCompile 'org.junit.jupiter:junit-jupiter-api:5.0.0-M2'
   testCompile 'org.junit.jupiter:junit-jupiter-engine:5.0.0-M2'
+  testCompile 'org.mockito:mockito-core:2.+'
 
   asm group: 'org.ow2.asm', name: 'asm', version: asmVersion
-  asm group: 'org.ow2.asm', name: 'asm-util', version: asmVersion
+  asm group: 'org.ow2.asm', name: 'asm-analysis', version: asmVersion
   asm group: 'org.ow2.asm', name: 'asm-commons', version: asmVersion
+  asm group: 'org.ow2.asm', name: 'asm-util', version: asmVersion
   asm group: 'com.googlecode.jarjar', name: 'jarjar', version: '1.3'
 
 

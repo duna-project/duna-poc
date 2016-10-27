@@ -1,2 +1,4 @@
 rootProject.name = 'duna-parent'
 include 'duna-core'
+include 'duna-gradle-plugin'
+

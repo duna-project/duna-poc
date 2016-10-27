@@ -1,28 +1,39 @@
-package io.duna.core.proxy.internal
+package io.duna.core.proxy_gen.internal
 
 import co.paralleluniverse.fibers.Suspendable
 import io.duna.asm.ClassVisitor
 import io.duna.asm.Handle
+import io.duna.asm.Label
 import io.duna.asm.Opcodes.*
 import io.duna.asm.Type
 import io.duna.asm.Type.*
 import io.duna.asm.commons.GeneratorAdapter
 import io.duna.asm.commons.Method
 import io.duna.core.io.BufferOutputStream
-import io.duna.core.proxy.internal.ASMTypes.*
-import net.bytebuddy.agent.builder.LambdaFactory
+import io.duna.core.proxy_gen.internal.ASMTypes.*
 import java.lang.invoke.LambdaMetafactory
 import java.lang.reflect.Method as JMethod
 
-object ProxyMethodBytecodeGenerator {
+internal object ProxyMethodBytecodeGenerator {
 
-  val metafactoryMethod = LambdaFactory::class.java
+  private val metafactoryMethod = LambdaMetafactory::class.java
       .declaredMethods.find { it.name == "metafactory" }
 
-  fun forMethod(method: Method,
-                classVisitor: ClassVisitor,
-                classInternalName: String,
-                remoteAddress: String) {
+  fun generateDefaultConstructor(classVisitor: ClassVisitor) {
+    val mv = classVisitor.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null)
+    val adapter = GeneratorAdapter(mv, ACC_PUBLIC, "<init>", "()V")
+
+    adapter.visitCode()
+    adapter.loadThis()
+    adapter.invokeConstructor(OBJECT_TYPE, Method("<init>", VOID_TYPE, arrayOf()))
+    adapter.returnValue()
+    adapter.endMethod()
+  }
+
+  fun generateMethod(method: Method,
+                     classVisitor: ClassVisitor,
+                     classInternalName: String,
+                     remoteAddress: String) {
 
     val lambdaMethod = generateLambdaMethod(method, classVisitor,
         classInternalName, remoteAddress)
@@ -37,6 +48,7 @@ object ProxyMethodBytecodeGenerator {
     val an = adapter.visitAnnotation(getDescriptor(Suspendable::class.java), true)
     an.visitEnd()
 
+    adapter.visitCode()
     val l0 = adapter.mark()
 
     // Local Variables
@@ -58,10 +70,10 @@ object ProxyMethodBytecodeGenerator {
 
     adapter.loadThis()
     adapter.getField(getObjectType(classInternalName), "objectMapper", OBJECT_MAPPER)
-    adapter.invokeVirtual(OBJECT_MAPPER, Method("getFactory", JSON_FACTORY, null))
+    adapter.invokeVirtual(OBJECT_MAPPER, Method("getFactory", JSON_FACTORY, arrayOf()))
 
     adapter.loadLocal(locOutBuffer)
-    adapter.invokeVirtual(JSON_FACTORY, Method("createGenerator", JSON_GENERATOR, null))
+    adapter.invokeVirtual(JSON_FACTORY, Method("createGenerator", JSON_GENERATOR, arrayOf(OUTPUT_STREAM_TYPE)))
     adapter.storeLocal(locGenerator)
 
     adapter.loadLocal(locGenerator)
@@ -79,7 +91,10 @@ object ProxyMethodBytecodeGenerator {
           Method("writeObject", VOID_TYPE, arrayOf(OBJECT_TYPE)))
     }
 
+    adapter.loadLocal(locGenerator)
     adapter.invokeVirtual(JSON_GENERATOR, Method("writeEndArray", VOID_TYPE, arrayOf()))
+
+    adapter.loadLocal(locGenerator)
     adapter.invokeVirtual(JSON_GENERATOR, Method("flush", VOID_TYPE, arrayOf()))
 
     adapter.loadThis()
@@ -87,11 +102,10 @@ object ProxyMethodBytecodeGenerator {
     adapter.invokeDynamic("accept",
         getMethodDescriptor(CONSUMER_TYPE, getObjectType(classInternalName), BUFFER_OUTPUT_STREAM),
         getMetafactoryHandle(),
-        arrayOf(
-            getType(getMethodDescriptor(VOID_TYPE, OBJECT_TYPE)),
-            getLambdaMethodHandle(lambdaMethod, classInternalName),
-            getType(getMethodDescriptor(VOID_TYPE, VERTX_HANDLER_TYPE))
-        ))
+
+        getType(getMethodDescriptor(VOID_TYPE, OBJECT_TYPE)),
+        getLambdaMethodHandle(lambdaMethod, classInternalName),
+        getType(getMethodDescriptor(VOID_TYPE, VERTX_HANDLER_TYPE)))
 
     adapter.invokeStatic(SYNC_TYPE, Method("awaitResult", OBJECT_TYPE, arrayOf(CONSUMER_TYPE)))
     adapter.checkCast(MESSAGE_TYPE)
@@ -106,7 +120,7 @@ object ProxyMethodBytecodeGenerator {
 
     adapter.loadThis()
     adapter.getField(getObjectType(classInternalName), "objectMapper", OBJECT_MAPPER)
-    adapter.invokeVirtual(OBJECT_MAPPER, Method("getFactory", JSON_FACTORY, null))
+    adapter.invokeVirtual(OBJECT_MAPPER, Method("getFactory", JSON_FACTORY, arrayOf()))
 
     adapter.loadLocal(locInBuffer)
     adapter.invokeVirtual(JSON_FACTORY, Method("createParser", JSON_PARSER_TYPE,
@@ -114,7 +128,7 @@ object ProxyMethodBytecodeGenerator {
     adapter.storeLocal(locParser)
 
     adapter.loadLocal(locParser)
-    adapter.push(method.returnType.descriptor)
+    adapter.push(method.returnType)
     adapter.invokeVirtual(JSON_PARSER_TYPE, Method("readValueAs", OBJECT_TYPE, arrayOf(CLASS_TYPE)))
     adapter.checkCast(method.returnType)
     adapter.returnValue()
@@ -126,23 +140,36 @@ object ProxyMethodBytecodeGenerator {
                                    classInternalName: String,
                                    remoteAddress: String): Method {
 
-    val methodVisitor = classVisitor.visitMethod(ACC_PUBLIC, "lambda\$call\$${method.name}",
+    val methodVisitor = classVisitor.visitMethod(ACC_SYNTHETIC + ACC_PUBLIC,
+        "lambda\$call\$${method.name}",
         getMethodDescriptor(VOID_TYPE, BUFFER_OUTPUT_STREAM, VERTX_HANDLER_TYPE),
         /* signature */ null, /* exceptions */ null)
 
-    val adapter = GeneratorAdapter(methodVisitor, ACC_PUBLIC,
-        method.name, method.descriptor)
+    val adapter = GeneratorAdapter(methodVisitor, ACC_SYNTHETIC + ACC_PUBLIC,
+        "lambda\$call\$${method.name}",
+        getMethodDescriptor(VOID_TYPE, BUFFER_OUTPUT_STREAM, VERTX_HANDLER_TYPE))
 
+    adapter.loadThis()
+    adapter.getField(getObjectType(classInternalName), "vertx", VERTX)
+    adapter.invokeInterface(VERTX, Method("eventBus", EVENT_BUS_TYPE, arrayOf()))
 
+    adapter.push(remoteAddress)
+
+    adapter.loadArg(0)
+    adapter.invokeVirtual(BUFFER_OUTPUT_STREAM, Method("getBuffer", BUFFER_TYPE, arrayOf()))
+
+    adapter.loadArg(1)
+    adapter.invokeInterface(EVENT_BUS_TYPE, Method("send", EVENT_BUS_TYPE,
+        arrayOf(STRING_TYPE, OBJECT_TYPE, VERTX_HANDLER_TYPE)))
+
+    adapter.pop()
+    adapter.returnValue()
+
+    adapter.endMethod()
 
     return Method("lambda\$call\$${method.name}",
         getMethodDescriptor(VOID_TYPE, BUFFER_OUTPUT_STREAM, VERTX_HANDLER_TYPE))
   }
-
-//  private fun createMethodAdapter(classVisitor: ClassVisitor, access: Int,
-//                                  name: String, descriptor: String): GeneratorAda {
-//
-//  }
 
   private fun getMetafactoryHandle(): Handle {
     return Handle(H_INVOKESTATIC, getInternalName(LambdaMetafactory::class.java),

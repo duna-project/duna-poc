@@ -1,6 +1,6 @@
-package io.duna.core.proxy.internal
+package io.duna.core.proxy_gen.internal
 
-import io.duna.core.proxy.ServiceProxyNamingStrategy
+import io.duna.core.proxy_gen.ServiceProxyNamingStrategy
 
 class DefaultServiceProxyNamingStrategy : ServiceProxyNamingStrategy {
   override fun getProxyClassName(serviceClass: Class<*>): String {

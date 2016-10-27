@@ -1,5 +1,6 @@
 package io.duna.vertx
 
+import co.paralleluniverse.fibers.Fiber
 import co.paralleluniverse.fibers.Suspendable
 import co.paralleluniverse.kotlin.fiber
 import co.paralleluniverse.strands.Strand
@@ -9,7 +10,7 @@ import com.google.inject.Guice
 import io.duna.core.io.BufferInputStream
 import io.duna.core.io.BufferOutputStream
 import io.duna.core.proxy.ProxyClassLoader
-import io.duna.core.proxy.ServiceProxyFactory
+import io.duna.core.proxy_gen.ServiceProxyFactory
 import io.duna.sandbox.POJO
 import io.duna.sandbox.SampleService
 import io.duna.sandbox.SampleServiceImpl
@@ -20,32 +21,48 @@ import io.vertx.core.Vertx
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.eventbus.Message
 import io.vertx.core.json.Json
+import io.vertx.core.json.JsonObject
 import io.vertx.ext.sync.Sync
+import io.vertx.ext.sync.Sync.*
 import io.vertx.ext.sync.SyncVerticle
+import java.util.concurrent.atomic.AtomicInteger
 
 class MainVerticle : SyncVerticle() {
 
   val service = SampleServiceImpl
 
+  companion object {
+    @JvmStatic
+    val atomic = AtomicInteger(1)
+
+    @JvmStatic
+    val local = object : ThreadLocal<Int>() {
+
+      override fun initialValue(): Int {
+        return (Math.random() * 50).toInt()
+      }
+    }
+  }
+
   @Suspendable
   override fun start() {
+    Vertx.currentContext().put("user", local)
 
-    println("Deploying consumer")
+    vertx.eventBus().consumer<JsonObject> ("address",
+      fiberHandler @Suspendable {
+        val id = it.body().getInteger("request")
+        val ctx = local.get()
+        local.set(ctx + 1)
 
-    vertx.eventBus().consumer<Buffer> ("address") {
-      println("Replying sender")
+        println("req ${id}, context: ${ctx}, ${Vertx.currentContext()}, ${Strand.currentStrand().id}")
 
-//      val inputStream = BufferInputStream(it.body())
-//      val query = Json.mapper.readerFor(Classificacao::class.java).readValue<Classificacao>(inputStream)
+        Fiber.sleep(200)
 
-      val result = service.call("", null, 0.0, false, null)
+        println("res ${id}, context: $ctx " + (Vertx.currentContext().get<ThreadLocal<Int>>("user")).get()
+            + ", ${Vertx.currentContext()}, ${Strand.currentStrand().id}")
 
-      val outputStream = BufferOutputStream(1024)
-      val writer = Json.mapper.writerFor(POJO::class.java)
-      writer.writeValue(outputStream, result)
-
-      it.reply(outputStream.buffer)
-    }
+        it.reply(JsonObject().put("result", "bye"))
+    })
   }
 }
 
@@ -53,30 +70,13 @@ class OtherVerticle : SyncVerticle() {
 
   @Suspendable
   override fun start() {
-    println("Deploying other verticle")
-
-    val clas = Classificacao(2016,
-        Autor(1),
-        Emenda(1),
-        Programacao(1),
-        Dotacao(1),
-        Beneficiario(1),
-        Impedimento(1))
-
-    println("Sending $clas")
-
-    val injector = Guice.createInjector(object : AbstractModule() {
-      override fun configure() {
-        bind(Vertx::class.java).toInstance(vertx)
-        bind(ObjectMapper::class.java).toInstance(Json.prettyMapper)
+    println("Other")
+    for (i in 0..5) {
+      vertx.eventBus().send<JsonObject>("address", JsonObject().put("request", i)) {
+        // println("Response: ${it.result()}, context: ${Vertx.currentContext()}")
       }
-    })
 
-    val service: SampleService = SampleServiceProxy()
-
-    injector.injectMembers(service)
-
-    val result = service.call("", null, 0.0, false, null)
-    println(result)
+      Strand.sleep(100)
+    }
   }
 }

@@ -5,7 +5,7 @@ import com.google.inject.BindingAnnotation
 import com.google.inject.ManualTypeLiteral
 import com.google.inject.Scopes
 import io.duna.core.proxy.ProxyClassLoader
-import io.duna.core.proxy.ServiceProxyFactory
+import io.duna.core.proxy_gen.ServiceProxyFactory
 import io.duna.core.service.Contract
 import io.duna.core.service.Service
 import io.github.lukehutch.fastclasspathscanner.scanner.ScanResult
@@ -13,6 +13,12 @@ import org.apache.logging.log4j.LogManager
 import java.lang.reflect.Modifier
 import javax.inject.Qualifier
 
+/**
+ * Binds service contracts to its implementations or to a proxy_gen for remote instances.
+ *
+ * @param scanResult The classpath scanning result.
+ * @author Carlos Eduardo Melo <[ceduardo.melo@redime.com.br]>
+ */
 class ServiceBinderModule(val scanResult: ScanResult) : AbstractModule() {
 
   private val logger = LogManager.getLogger(ServiceBinderModule::class.java)
@@ -20,12 +26,13 @@ class ServiceBinderModule(val scanResult: ScanResult) : AbstractModule() {
   private val proxyClassLoader = ProxyClassLoader(javaClass.classLoader, ServiceProxyFactory())
 
   override fun configure() {
-    logger.info("Registering services.")
+    logger.info("Registering services")
 
-    getServiceInterfaces().forEach {
-      logger.info("Registering serviceClass ${it.canonicalName}")
+    getServiceContracts().forEach {
+      logger.info("Registering contract ${it.canonicalName}")
 
-      val implementations = scanResult.getNamesOfClassesImplementing(it.canonicalName).map { Class.forName(it) }
+      val implementations = scanResult.getNamesOfClassesImplementing(it.canonicalName)
+          .map { Class.forName(it) }
 
       when (implementations.size) {
         0 -> createAndBindProxy(it)
@@ -58,7 +65,7 @@ class ServiceBinderModule(val scanResult: ScanResult) : AbstractModule() {
   }
 
   private fun createAndBindProxy(serviceClass: Class<*>) {
-    val proxyClass = proxyClassLoader.proxyForService(serviceClass)
+    val proxyClass = proxyClassLoader.loadProxyForService(serviceClass)
     val typeLiteral = ManualTypeLiteral(proxyClass)
 
     // Should bind to instance
@@ -67,7 +74,7 @@ class ServiceBinderModule(val scanResult: ScanResult) : AbstractModule() {
         .`in`(Scopes.SINGLETON)
   }
 
-  private fun getServiceInterfaces(): List<Class<*>> {
+  private fun getServiceContracts(): List<Class<*>> {
     return scanResult.getNamesOfClassesWithAnnotation(Contract::class.java).map { Class.forName(it) }
   }
 
