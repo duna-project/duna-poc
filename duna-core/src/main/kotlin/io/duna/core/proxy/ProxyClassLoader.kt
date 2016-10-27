@@ -1,7 +1,6 @@
 package io.duna.core.proxy
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.duna.core.proxy.ServiceProxy
 import io.duna.core.proxy.ServiceProxyInterceptor
 import io.duna.core.proxy_gen.ServiceProxyFactory
 import io.duna.core.service.Contract
@@ -37,7 +36,6 @@ class ProxyClassLoader(parent: ClassLoader,
     // @formatter:off
     return ByteBuddy()
         .subclass(Any::class.java)
-        .implement(ServiceProxy::class.java)
         .implement(serviceClass)
 
         // Proxy fields
@@ -46,15 +44,13 @@ class ProxyClassLoader(parent: ClassLoader,
         .defineField("objectMapper", ObjectMapper::class.java, Visibility.PRIVATE)
           .annotateField(injectAnnotation)
 
-        .method(named("getVertx")).intercept(FieldAccessor.ofField("vertx"))
-        .method(named("getObjectMapper")).intercept(FieldAccessor.ofField("objectMapper"))
-
         // Service contract method delegation
         .method(isDeclaredBy(serviceClass)).intercept(
-        MethodDelegation
-            .to(ServiceProxyInterceptor())
-            .filter(not(isDeclaredBy(Any::class.java)))
+          MethodDelegation
+              .to(ServiceProxyInterceptor())
+              .filter(not(isDeclaredBy(Any::class.java)))
         )
+
         .make()
         .load(this)
         .loaded as Class<T>

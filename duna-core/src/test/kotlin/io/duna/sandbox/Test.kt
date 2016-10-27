@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import io.duna.asm.Type
 import io.vertx.ext.sync.Sync
 import net.bytebuddy.ByteBuddy
+import net.bytebuddy.description.method.MethodDescription
+import net.bytebuddy.implementation.MethodCall
 import net.bytebuddy.implementation.MethodDelegation
 import net.bytebuddy.implementation.bind.annotation.Origin
 import net.bytebuddy.matcher.ElementMatchers
@@ -25,30 +27,60 @@ object X {
   }
 }
 
+object Target {
+
+  fun targetMethod(str: String, int: Int, pojo: POJO) {
+    println(str)
+    println(int)
+    println(pojo)
+  }
+}
+
 object Test {
 
   @JvmStatic
   fun main(vararg args: String) {
-    val parser = io.vertx.core.json.Json.mapper.factory.createParser("""{
-      "field0": "asdsdasd",
-      "field2": [1,2,3,4,5],
-      "field1": {"asdasd": "asd"}
-      }""")
 
-    parser.nextToken()
-    while (parser.nextToken() != JsonToken.END_OBJECT) {
-      println(parser.currentToken)
-      println(parser.currentName)
+    val paramsTypes = arrayOf(String::class.java, Int::class.java, POJO::class.java)
+    val params = arrayOf<Any>("ASd", 1, POJO(1, "ASd"))
 
-      parser.nextToken()
-      if (parser.currentToken == JsonToken.VALUE_STRING)
-        println(parser.readValueAs(String::class.java))
+    val proxy = ByteBuddy()
+    .subclass(Any::class.java)
+    .implement(Invocation::class.java)
+    .method(ElementMatchers.isDeclaredBy(Invocation::class.java))
+    .intercept(
+        MethodCall.invoke(
+            Target::class.java.getDeclaredMethod("targetMethod", *paramsTypes))
+        .on(Target)
+        .withAllArguments()
+    )
+    .make()
+    .load(ClassLoader.getSystemClassLoader())
+    .loaded
+    .newInstance() as Invocation
 
-      if (parser.currentToken == JsonToken.START_ARRAY) {
-        println("Array")
-        println(Arrays.toString(parser.readValueAs(Array<Int>::class.java)))
-      }
-    }
+    proxy.invoke(*params)
+
+//    val parser = io.vertx.core.json.Json.mapper.factory.createParser("""{
+//      "field0": "asdsdasd",
+//      "field2": [1,2,3,4,5],
+//      "field1": {"asdasd": "asd"}
+//      }""")
+//
+//    parser.nextToken()
+//    while (parser.nextToken() != JsonToken.END_OBJECT) {
+//      println(parser.currentToken)
+//      println(parser.currentName)
+//
+//      parser.nextToken()
+//      if (parser.currentToken == JsonToken.VALUE_STRING)
+//        println(parser.readValueAs(String::class.java))
+//
+//      if (parser.currentToken == JsonToken.START_ARRAY) {
+//        println("Array")
+//        println(Arrays.toString(parser.readValueAs(Array<Int>::class.java)))
+//      }
+//    }
 
 
 //    val json = """

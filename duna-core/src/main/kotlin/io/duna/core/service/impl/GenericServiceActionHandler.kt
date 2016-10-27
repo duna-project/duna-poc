@@ -2,13 +2,26 @@ package io.duna.core.service.impl
 
 import co.paralleluniverse.fibers.Suspendable
 import com.fasterxml.jackson.core.JsonToken
+import io.duna.core.DunaException
 import io.duna.core.io.BufferInputStream
+import io.duna.core.service.Service
 import io.vertx.core.Handler
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.eventbus.Message
 import io.vertx.core.json.Json
 
-class GenericActionHandler : Handler<Message<Buffer>> {
+class GenericServiceActionHandler(private val target: Any,
+                                  private val method: String) : Handler<Message<Buffer>> {
+
+  val parameterTypes: List<Class<*>>
+
+  init {
+    if (!target.javaClass.isAnnotationPresent(Service::class.java)) {
+      throw DunaException("The action handler target must be a service.")
+    }
+
+    parameterTypes = listOf()
+  }
 
   @Suspendable
   override fun handle(event: Message<Buffer>) {

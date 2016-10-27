@@ -6,9 +6,8 @@ interface SampleService {
   fun call(m: String?, n: POJO?, z: Double, x: Boolean, t: java.util.List<Any>?): POJO?
 }
 
-class POJO {
-  var id: Int? = null
-  var text: String? = null
+data class POJO(var id: Int? = null,
+                var text: String? = null) {
 }
 
 object SampleServiceImpl : SampleService {

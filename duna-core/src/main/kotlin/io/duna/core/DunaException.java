@@ -7,4 +7,8 @@ public class DunaException extends RuntimeException {
     public DunaException(Throwable t) {
         super(t);
     }
+
+    public DunaException(String msg) {
+        super(msg);
+    }
 }

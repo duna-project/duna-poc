@@ -1,9 +1,7 @@
 package io.duna.core.inject
 
-import com.google.inject.AbstractModule
-import com.google.inject.BindingAnnotation
-import com.google.inject.ManualTypeLiteral
-import com.google.inject.Scopes
+import com.google.inject.*
+import com.google.inject.multibindings.Multibinder
 import io.duna.core.proxy.ProxyClassLoader
 import io.duna.core.proxy_gen.ServiceProxyFactory
 import io.duna.core.service.Contract
@@ -24,6 +22,10 @@ class ServiceBinderModule(val scanResult: ScanResult) : AbstractModule() {
   private val logger = LogManager.getLogger(ServiceBinderModule::class.java)
 
   private val proxyClassLoader = ProxyClassLoader(javaClass.classLoader, ServiceProxyFactory())
+
+  private val servicesMultibinder = Multibinder.newSetBinder(binder(),
+      Any::class.java,
+      Service::class.java)
 
   override fun configure() {
     logger.info("Registering services")
@@ -54,13 +56,18 @@ class ServiceBinderModule(val scanResult: ScanResult) : AbstractModule() {
       if (qualifier == null) {
         bind(typeLiteral)
             .to(implementation)
-            .asEagerSingleton()
+            .`in`(Scopes.SINGLETON)
       } else {
         bind(typeLiteral)
             .annotatedWith(qualifier)
             .to(implementation)
-            .asEagerSingleton()
+            .`in`(Scopes.SINGLETON)
       }
+
+      servicesMultibinder
+          .addBinding()
+          .to(implementation)
+          .`in`(Scopes.SINGLETON)
     }
   }
 
