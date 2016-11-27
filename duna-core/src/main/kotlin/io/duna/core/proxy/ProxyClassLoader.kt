@@ -1,28 +1,22 @@
 package io.duna.core.proxy
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.duna.core.proxy.ServiceProxyInterceptor
-import io.duna.core.proxy_gen.ServiceProxyFactory
 import io.duna.core.service.Contract
 import io.vertx.core.Vertx
 import net.bytebuddy.ByteBuddy
 import net.bytebuddy.description.annotation.AnnotationDescription
-import net.bytebuddy.description.modifier.ModifierContributor
 import net.bytebuddy.description.modifier.Visibility
-import net.bytebuddy.implementation.FieldAccessor
 import net.bytebuddy.implementation.MethodDelegation
-import net.bytebuddy.matcher.ElementMatchers
-import net.bytebuddy.matcher.ElementMatchers.*
-import java.lang.reflect.Modifier
+import net.bytebuddy.matcher.ElementMatchers.isDeclaredBy
+import net.bytebuddy.matcher.ElementMatchers.not
 import javax.inject.Inject
 
 /**
- * Classloader responsible for creating and loading remote service proxy_gen classes.
+ * Classloader responsible for creating and loading remote service proxy classes.
  *
  * @author Carlos Eduardo Melo <[ceduardo.melo@redime.com.br]>
  */
-class ProxyClassLoader(parent: ClassLoader,
-                       private val proxyFactory: ServiceProxyFactory) : ClassLoader(parent) {
+class ProxyClassLoader(parent: ClassLoader) : ClassLoader(parent) {
 
   @Suppress("UNCHECKED_CAST")
   fun <T> loadProxyForService(serviceClass: Class<T>): Class<T> {
@@ -56,24 +50,4 @@ class ProxyClassLoader(parent: ClassLoader,
         .loaded as Class<T>
     // @formatter:on
   }
-
-//  @Suppress("UNCHECKED_CAST")
-//  fun <T> loadProxyForService(serviceClass: Class<T>): Class<T> {
-//    if (!serviceClass.isAnnotationPresent(Contract::class.java)) {
-//      throw RuntimeException("[ERR-0001] ${serviceClass.canonicalName} isn't a valid service contract.")
-//    }
-//
-//    if (!(serviceClass.isInterface || Modifier.isAbstract(serviceClass.modifiers))) {
-//      throw RuntimeException("[ERR-0002] Error registering ${serviceClass.canonicalName}: cannot register concrete classes " +
-//          "as remote services.")
-//    }
-//
-//    val bytes = proxyFactory.generateFor(serviceClass)
-//
-//    val clazz = defineClass(proxyFactory.namingStrategy.getProxyClassName(serviceClass),
-//        bytes, 0, bytes.size)
-//    resolveClass(clazz)
-//
-//    return clazz as Class<T>
-//  }
 }

@@ -1,9 +1,11 @@
 package io.duna.core.inject
 
-import com.google.inject.*
+import com.google.inject.AbstractModule
+import com.google.inject.BindingAnnotation
+import com.google.inject.ManualTypeLiteral
+import com.google.inject.Scopes
 import com.google.inject.multibindings.Multibinder
 import io.duna.core.proxy.ProxyClassLoader
-import io.duna.core.proxy_gen.ServiceProxyFactory
 import io.duna.core.service.Contract
 import io.duna.core.service.Service
 import io.github.lukehutch.fastclasspathscanner.scanner.ScanResult
@@ -12,26 +14,32 @@ import java.lang.reflect.Modifier
 import javax.inject.Qualifier
 
 /**
- * Binds service contracts to its implementations or to a proxy_gen for remote instances.
+ * Binds service contracts to its implementations or to a proxy for remote instances.
  *
- * @param scanResult The classpath scanning result.
+ * This module uses a classpath scanning result to bind local and remote services to
+ * their respective contracts, in order to be injected at dependant locations.
+ *
+ * @param scanResult the classpath scanning result.
+ *
  * @author Carlos Eduardo Melo <[ceduardo.melo@redime.com.br]>
  */
 class ServiceBinderModule(val scanResult: ScanResult) : AbstractModule() {
 
   private val logger = LogManager.getLogger(ServiceBinderModule::class.java)
 
-  private val proxyClassLoader = ProxyClassLoader(javaClass.classLoader, ServiceProxyFactory())
+  private val proxyClassLoader = ProxyClassLoader(javaClass.classLoader)
 
-  private val servicesMultibinder = Multibinder.newSetBinder(binder(),
-      Any::class.java,
-      Service::class.java)
+  private lateinit var servicesMultibinder: Multibinder<Any>
 
   override fun configure() {
+    servicesMultibinder = Multibinder.newSetBinder(binder(),
+        Any::class.java,
+        Service::class.java)
+
     logger.info("Registering services")
 
     getServiceContracts().forEach {
-      logger.info("Registering contract ${it.canonicalName}")
+      logger.info("Binding service contract ${it.canonicalName}")
 
       val implementations = scanResult.getNamesOfClassesImplementing(it.canonicalName)
           .map { Class.forName(it) }
@@ -44,21 +52,21 @@ class ServiceBinderModule(val scanResult: ScanResult) : AbstractModule() {
   }
 
   @Suppress("UNCHECKED_CAST")
-  private fun bindImplementations(serviceClass: Class<*>) {
-    getServiceImplementations(serviceClass).forEach { implementation ->
+  private fun bindImplementations(serviceContract: Class<*>) {
+    getServiceImplementations(serviceContract).forEach { implementation ->
       val qualifier = implementation.declaredAnnotations.filter {
         it.annotationClass.java.isAnnotationPresent(Qualifier::class.java) ||
             it.javaClass.isAnnotationPresent(BindingAnnotation::class.java)
       }.singleOrNull()
 
-      val typeLiteral = ManualTypeLiteral(serviceClass)
+      val contractTypeLiteral = ManualTypeLiteral(serviceContract)
 
       if (qualifier == null) {
-        bind(typeLiteral)
+        bind(contractTypeLiteral)
             .to(implementation)
             .`in`(Scopes.SINGLETON)
       } else {
-        bind(typeLiteral)
+        bind(contractTypeLiteral)
             .annotatedWith(qualifier)
             .to(implementation)
             .`in`(Scopes.SINGLETON)

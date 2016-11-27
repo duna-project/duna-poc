@@ -21,13 +21,16 @@ internal class ServiceProxyInterceptor {
 
   val addressCache = ConcurrentHashMap<Method, String>()
 
+  /**
+   * Called by the proxy interceptor to forward requests to a remote service.
+   */
   @Suppress("unused")
   @Suspendable
   fun intercept(@AllArguments arguments: Array<Any>,
                 @Origin(cache = true) method: Method,
                 @This proxy: Any,
                 @FieldValue("vertx") vertx: Vertx,
-                @FieldValue("objectMapper") objectMapper: ObjectMapper): Any {
+                @FieldValue("objectMapper") objectMapper: ObjectMapper): Any? {
 
     val outBuffer = BufferOutputStream(Buffer.buffer(1024))
     val generator = objectMapper.factory.createGenerator(outBuffer)
@@ -39,9 +42,11 @@ internal class ServiceProxyInterceptor {
     generator.flush()
     generator.close()
 
+    val defaultAddress = method.declaringClass.canonicalName
     val address = addressCache[method] ?:
-        method.declaringClass.getAnnotation(Address::class.java)?.value
-        ?: method.declaringClass.canonicalName
+        ((method.declaringClass.getAnnotation(Address::class.java)?.value ?: defaultAddress) + ".${method.name}")
+
+    addressCache[method] = address
 
     val deliveryOptions = DeliveryOptions()
     deliveryOptions.addHeader("action", method.name)
@@ -66,6 +71,9 @@ internal class ServiceProxyInterceptor {
       return result
     }
 
-    return Unit
+    if (method.returnType == Unit::class.java)
+      return Unit
+    else
+      return null
   }
 }
