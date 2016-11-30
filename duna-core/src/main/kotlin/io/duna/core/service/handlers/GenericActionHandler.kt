@@ -12,7 +12,7 @@ import java.util.*
 import javax.inject.Inject
 
 /**
- * Handles a request to a service and replies the result.
+ * Handles a request goTo a service and replies the result.
  */
 internal class GenericActionHandler<T>(private val service: T,
                                        private val method: Method) : Handler<Message<Buffer>> {

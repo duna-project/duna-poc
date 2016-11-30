@@ -1,4 +1,11 @@
 rootProject.name = 'duna-parent'
 include 'duna-core'
 include 'duna-gradle-plugin'
+include 'examples:duna-example-api'
+findProject(':examples:duna-example-api')?.name = 'duna-example-api'
+include 'examples:duna-example-a'
+findProject(':examples:duna-example-a')?.name = 'duna-example-a'
+include 'examples:duna-example-b'
+findProject(':examples:duna-example-b')?.name = 'duna-example-b'
+include 'duna-annotations'
 

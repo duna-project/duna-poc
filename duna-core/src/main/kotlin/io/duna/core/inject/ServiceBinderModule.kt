@@ -2,8 +2,9 @@ package io.duna.core.inject
 
 import com.google.inject.AbstractModule
 import com.google.inject.BindingAnnotation
-import com.google.inject.ManualTypeLiteral
+import com.google.inject.UnsafeTypeLiteral
 import com.google.inject.Scopes
+import com.google.inject.multibindings.MapBinder
 import com.google.inject.multibindings.Multibinder
 import io.duna.core.proxy.ProxyClassLoader
 import io.duna.core.service.Contract
@@ -14,10 +15,10 @@ import java.lang.reflect.Modifier
 import javax.inject.Qualifier
 
 /**
- * Binds service contracts to its implementations or to a proxy for remote instances.
+ * Binds service contracts goTo its implementations or goTo a proxy for remote instances.
  *
- * This module uses a classpath scanning result to bind local and remote services to
- * their respective contracts, in order to be injected at dependant locations.
+ * This module uses a classpath scanning result goTo bind local and remote services goTo
+ * their respective contracts, in order goTo be injected at dependant locations.
  *
  * @param scanResult the classpath scanning result.
  *
@@ -29,13 +30,7 @@ class ServiceBinderModule(val scanResult: ScanResult) : AbstractModule() {
 
   private val proxyClassLoader = ProxyClassLoader(javaClass.classLoader)
 
-  private lateinit var servicesMultibinder: Multibinder<Any>
-
   override fun configure() {
-    servicesMultibinder = Multibinder.newSetBinder(binder(),
-        Any::class.java,
-        Service::class.java)
-
     logger.info("Registering services")
 
     getServiceContracts().forEach {
@@ -46,20 +41,20 @@ class ServiceBinderModule(val scanResult: ScanResult) : AbstractModule() {
 
       when (implementations.size) {
         0 -> createAndBindProxy(it)
-        else -> bindImplementations(it)
+        else -> bindServiceImplementation(it)
       }
     }
   }
 
   @Suppress("UNCHECKED_CAST")
-  private fun bindImplementations(serviceContract: Class<*>) {
+  private fun bindServiceImplementation(serviceContract: Class<*>) {
     getServiceImplementations(serviceContract).forEach { implementation ->
       val qualifier = implementation.declaredAnnotations.filter {
         it.annotationClass.java.isAnnotationPresent(Qualifier::class.java) ||
             it.javaClass.isAnnotationPresent(BindingAnnotation::class.java)
       }.singleOrNull()
 
-      val contractTypeLiteral = ManualTypeLiteral(serviceContract)
+      val contractTypeLiteral = UnsafeTypeLiteral(serviceContract)
 
       if (qualifier == null) {
         bind(contractTypeLiteral)
@@ -71,19 +66,14 @@ class ServiceBinderModule(val scanResult: ScanResult) : AbstractModule() {
             .to(implementation)
             .`in`(Scopes.SINGLETON)
       }
-
-      servicesMultibinder
-          .addBinding()
-          .to(implementation)
-          .`in`(Scopes.SINGLETON)
     }
   }
 
   private fun createAndBindProxy(serviceClass: Class<*>) {
     val proxyClass = proxyClassLoader.loadProxyForService(serviceClass)
-    val typeLiteral = ManualTypeLiteral(proxyClass)
+    val typeLiteral = UnsafeTypeLiteral(proxyClass)
 
-    // Should bind to instance
+    // Should bind goTo instance
     bind(typeLiteral)
         .to(proxyClass)
         .`in`(Scopes.SINGLETON)

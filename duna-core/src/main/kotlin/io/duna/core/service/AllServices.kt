@@ -2,11 +2,8 @@ package io.duna.core.service
 
 import com.google.inject.BindingAnnotation
 
-/**
- * Identifies an interface as a service contract.
- */
 @BindingAnnotation
 @MustBeDocumented
-@Target(AnnotationTarget.CLASS)
+@Target(AnnotationTarget.FIELD)
 @Retention(AnnotationRetention.RUNTIME)
-annotation class Contract
+internal annotation class AllServices

@@ -2,6 +2,7 @@ package io.duna.core.proxy
 
 import co.paralleluniverse.fibers.Suspendable
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.google.inject.Inject
 import io.duna.core.io.BufferInputStream
 import io.duna.core.io.BufferOutputStream
 import io.duna.core.service.Address
@@ -14,24 +15,22 @@ import net.bytebuddy.implementation.bind.annotation.AllArguments
 import net.bytebuddy.implementation.bind.annotation.FieldValue
 import net.bytebuddy.implementation.bind.annotation.Origin
 import net.bytebuddy.implementation.bind.annotation.This
+import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
 
-internal class ServiceProxyInterceptor {
+internal class ProxyCallInterceptor : InvocationHandler {
 
   val addressCache = ConcurrentHashMap<Method, String>()
 
-  /**
-   * Called by the proxy interceptor to forward requests to a remote service.
-   */
-  @Suppress("unused")
-  @Suspendable
-  fun intercept(@AllArguments arguments: Array<Any>,
-                @Origin(cache = true) method: Method,
-                @This proxy: Any,
-                @FieldValue("vertx") vertx: Vertx,
-                @FieldValue("objectMapper") objectMapper: ObjectMapper): Any? {
+  @Inject
+  lateinit var vertx: Vertx
 
+  @Inject
+  lateinit var objectMapper: ObjectMapper
+
+  @Suspendable
+  override fun invoke(proxy: Any, method: Method, arguments: Array<out Any>): Any? {
     val outBuffer = BufferOutputStream(Buffer.buffer(1024))
     val generator = objectMapper.factory.createGenerator(outBuffer)
 
@@ -56,8 +55,9 @@ internal class ServiceProxyInterceptor {
             .joinToString(",")
     )
 
-    // TODO: Add some kind of filter support here
+    // TODO Add support goTo request filters
 
+    println("Forwarding request goTo $address")
     val response = awaitResult<Message<Buffer>>({
       vertx.eventBus().send(address, outBuffer.buffer, deliveryOptions, it)
     }, 1000).body()
@@ -76,4 +76,24 @@ internal class ServiceProxyInterceptor {
     else
       return null
   }
+
 }
+
+//internal class ProxyCallInterceptor {
+//
+//  val addressCache = ConcurrentHashMap<Method, String>()
+//
+//  /**
+//   * Called by the proxy interceptor goTo forward requests goTo a remote service.
+//   */
+//  @Suppress("unused")
+//  @Suspendable
+//  fun intercept(@AllArguments arguments: Array<Any>,
+//                @Origin(cache = true) method: Method,
+//                @This proxy: Any,
+//                @FieldValue("vertx") vertx: Vertx,
+//                @FieldValue("objectMapper") objectMapper: ObjectMapper): Any? {
+//
+//
+//  }
+//}
