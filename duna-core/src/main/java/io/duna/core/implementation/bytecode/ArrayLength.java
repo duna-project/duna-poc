@@ -1,4 +1,4 @@
-package io.duna.core.bytecode;
+package io.duna.core.implementation.bytecode;
 
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;

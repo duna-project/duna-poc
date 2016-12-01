@@ -1,9 +1,9 @@
-package io.duna.core.bytecode;
+package io.duna.core.implementation.bytecode;
 
-import jdk.internal.org.objectweb.asm.Opcodes;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.jar.asm.MethodVisitor;
+import net.bytebuddy.jar.asm.Opcodes;
 
 /**
  * TODO refactor this
@@ -25,6 +25,6 @@ public enum Frame implements StackManipulation {
     @Override
     public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
         methodVisitor.visitFrame(localOpcode, 0, null, 0, null);
-        return null;
+        return new Size(0, 0);
     }
 }

@@ -12,6 +12,7 @@ import io.vertx.core.Verticle
 import io.vertx.core.Vertx
 import io.vertx.core.json.Json
 import io.vertx.ext.sync.SyncVerticle
+import net.bytebuddy.ByteBuddy
 import org.apache.logging.log4j.LogManager
 
 class SupervisorVerticle : SyncVerticle() {
@@ -26,7 +27,7 @@ class SupervisorVerticle : SyncVerticle() {
     val parentInjector = Guice.createInjector(object : AbstractModule() {
       override fun configure() {
         bind(Vertx::class.java).toInstance(vertx)
-        bind(ObjectMapper::class.java).toInstance(Json.prettyMapper)
+        bind(ObjectMapper::class.java).toInstance(Json.mapper)
 
         install(RemoteServiceBinderModule())
       }
@@ -44,20 +45,6 @@ class SupervisorVerticle : SyncVerticle() {
 
           localInjector.injectMembers(serviceVerticle)
           verticles += serviceVerticle
-
-//          value.acceptTargetVisitor(object : DefaultBindingTargetVisitor<Any, Unit>() {
-//            override fun visit(linkedKeyBinding: LinkedKeyBinding<out Any>?) {
-//              if (linkedKeyBinding == null)
-//                return
-//
-//              val serviceVerticle = ServiceVerticle(linkedKeyBinding.key.typeLiteral.rawType,
-//                  linkedKeyBinding.provider.get())
-//
-//              localInjector.injectMembers(serviceVerticle)
-//
-//              verticles += serviceVerticle
-//            }
-//          })
         }
 
     // Start the service verticles

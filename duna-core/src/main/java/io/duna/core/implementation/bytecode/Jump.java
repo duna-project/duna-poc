@@ -1,18 +1,23 @@
-package io.duna.core.bytecode;
+package io.duna.core.implementation.bytecode;
 
 import net.bytebuddy.implementation.Implementation;
+import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.jar.asm.MethodVisitor;
 import net.bytebuddy.jar.asm.Opcodes;
 
 public enum Jump {
-    IF_IGREATER_EQUAL(Opcodes.IF_ICMPGE),
-    IF_IEQUAL(Opcodes.IF_ICMPEQ);
+    IF_IGREATER_EQUAL(Opcodes.IF_ICMPGE, new StackManipulation.Size(-2 , 0)),
+    IF_IEQUAL(Opcodes.IF_ICMPEQ, new StackManipulation.Size(-2 , 0)),
+    IF_NE(Opcodes.IFNE, new StackManipulation.Size(-1 , 0));
 
     private Integer loadOpcode;
 
-    Jump(Integer loadOpcode) {
+    private StackManipulation.Size sizeImpact;
+
+    Jump(Integer loadOpcode, StackManipulation.Size sizeImpact) {
         this.loadOpcode = loadOpcode;
+        this.sizeImpact = sizeImpact;
     }
 
     public StackManipulation goTo(LabelAdder labelAdder) {
@@ -25,7 +30,7 @@ public enum Jump {
             @Override
             public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
                 methodVisitor.visitJumpInsn(loadOpcode, labelAdder.asmLabel);
-                return new Size(-2, 0);
+                return sizeImpact;
             }
         };
     }

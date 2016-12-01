@@ -57,10 +57,10 @@ internal class ProxyCallInterceptor : InvocationHandler {
 
     // TODO Add support goTo request filters
 
-    println("Forwarding request goTo $address")
+    println("Forwarding request goTo $address in $vertx")
     val response = awaitResult<Message<Buffer>>({
       vertx.eventBus().send(address, outBuffer.buffer, deliveryOptions, it)
-    }, 1000).body()
+    }, 5000).body()
 
     if (response.length() > 0) {
       val inBuffer = BufferInputStream(response)

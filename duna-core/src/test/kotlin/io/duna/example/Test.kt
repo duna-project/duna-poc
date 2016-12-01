@@ -117,10 +117,10 @@ object StartCaller {
           val vertx = it.result()
 
           val request = Buffer.buffer()
-//          val outBuffer = BufferOutputStream(request)
-//          val generator = Json.prettyMapper.factory.createGenerator(outBuffer)
-//
-//          generator.writeObject("asdasd")
+          val outBuffer = BufferOutputStream(request)
+          val generator = Json.mapper.factory.createGenerator(outBuffer)
+
+          generator.writeObject("asdasd")
 
           vertx.eventBus().send<Buffer>("ServiceB.forwardPing", request) { res ->
             if (res.failed()) {
@@ -130,7 +130,7 @@ object StartCaller {
 
             val buffer = res.result().body()
             val inBuffer = BufferInputStream(buffer)
-            val parser = Json.prettyMapper.factory.createParser(inBuffer)
+            val parser = Json.mapper.factory.createParser(inBuffer)
 
             val result = parser.readValueAs(String::class.java)
 

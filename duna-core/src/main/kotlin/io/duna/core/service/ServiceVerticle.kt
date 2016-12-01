@@ -52,36 +52,10 @@ class ServiceVerticle(private val contractClass: Class<*>,
       val handler = GenericActionHandler(service, method)
       injector.injectMembers(handler)
 
+      println(handler);
+
       vertx.eventBus().consumer<Buffer>("$serviceAddress.${method.name}",
-          fiberHandler { event ->
-            println("handling")
-
-            val inBuffer = BufferInputStream(event.body())
-            val parser = objectMapper.factory.createParser(inBuffer)
-
-            val parameters = arrayOfNulls<Any>(method.parameterCount)
-
-            method.parameterTypes.forEachIndexed { i, clazz ->
-              parameters[i] = parser.readValueAs(clazz)
-            }
-
-            println("Method $method")
-            println("Service $service")
-            println("Parameters " + Arrays.toString(parameters))
-
-            val result = fiber @Suspendable { method.invoke(service, *parameters) }.get()
-
-            if (method.returnType != Unit::class.java) {
-              val outBuffer = BufferOutputStream(Buffer.buffer(1024))
-              val generator = objectMapper.factory.createGenerator(outBuffer)
-
-              generator.writeObject(result)
-
-              event.reply(outBuffer.buffer)
-            } else {
-              event.reply(null)
-            }
-          })
+          fiberHandler(handler))
     }
 
     vertx.eventBus().consumer<Buffer>("a",
