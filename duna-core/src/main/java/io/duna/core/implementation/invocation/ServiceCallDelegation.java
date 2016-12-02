@@ -1,4 +1,4 @@
-package io.duna.core.service.invocation;
+package io.duna.core.implementation.invocation;
 
 import co.paralleluniverse.fibers.SuspendExecution;
 

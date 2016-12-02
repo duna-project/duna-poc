@@ -4,6 +4,7 @@ import co.paralleluniverse.fibers.Suspendable
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.inject.AbstractModule
 import com.google.inject.Guice
+import io.duna.core.inject.AnnotateRemoteContractsAsSuspendableModule
 import io.duna.core.inject.LocalServiceBinderModule
 import io.duna.core.inject.RemoteServiceBinderModule
 import io.duna.core.service.Contract
@@ -22,13 +23,14 @@ class SupervisorVerticle : SyncVerticle() {
   @Suspendable
   override fun start() {
 
-    logger.debug("Configuring proxies and dependency injection")
+    logger.debug("Configuring proxies and instances for dependency injection")
 
     val parentInjector = Guice.createInjector(object : AbstractModule() {
       override fun configure() {
         bind(Vertx::class.java).toInstance(vertx)
         bind(ObjectMapper::class.java).toInstance(Json.mapper)
 
+        install(AnnotateRemoteContractsAsSuspendableModule())
         install(RemoteServiceBinderModule())
       }
     })
@@ -36,18 +38,19 @@ class SupervisorVerticle : SyncVerticle() {
     val localInjector = parentInjector.createChildInjector(LocalServiceBinderModule())
     val verticles = mutableListOf<Verticle>()
 
-    // Create verticles for all local services
+
+    logger.debug("Creating verticles for all local services")
     localInjector.bindings.entries
-        .filter { (key, _) -> key.typeLiteral.rawType.isAnnotationPresent(Contract::class.java) }
-        .forEach { (key, value) ->
-          val serviceVerticle = ServiceVerticle(key.typeLiteral.rawType,
-              value.provider.get())
+      .filter { (key, _) -> key.typeLiteral.rawType.isAnnotationPresent(Contract::class.java) }
+      .forEach { (key, value) ->
+        val serviceVerticle = ServiceVerticle(key.typeLiteral.rawType,
+          value.provider.get())
 
-          localInjector.injectMembers(serviceVerticle)
-          verticles += serviceVerticle
-        }
+        localInjector.injectMembers(serviceVerticle)
+        verticles += serviceVerticle
+      }
 
-    // Start the service verticles
+    logger.debug("Deploying verticles")
     verticles.forEach { vertx.deployVerticle(it) }
   }
 }

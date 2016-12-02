@@ -13,13 +13,14 @@ import io.vertx.core.buffer.Buffer
 import io.vertx.core.eventbus.EventBus
 import io.vertx.ext.sync.Sync.fiberHandler
 import io.vertx.ext.sync.SyncVerticle
+import net.bytebuddy.ByteBuddy
 import org.apache.logging.log4j.LogManager
 import java.util.*
 import javax.inject.Inject
 import javax.inject.Qualifier
 
 /**
- * Service façade responsible goTo receiving [EventBus] events and
+ * Service façade responsible for receiving [EventBus] events and
  * dispatching them goTo the corresponding service.
  */
 class ServiceVerticle(private val contractClass: Class<*>,
@@ -30,38 +31,24 @@ class ServiceVerticle(private val contractClass: Class<*>,
   @Inject
   lateinit var injector: Injector
 
-  @Inject
-  lateinit var objectMapper: ObjectMapper
-
   @Suspendable
   override fun start() {
-    var serviceAddress = contractClass.getAnnotation(Address::class.java)?.value ?:
-        contractClass.canonicalName ?: ""
+    val qualifierPrefix = Services.getQualifier(service.javaClass)?.javaClass?.name
 
-    val qualifier = Services.getQualifier(service.javaClass)
-    if (qualifier != null) serviceAddress += "@$qualifier"
-
-    logger.debug("Starting verticle")
-    logger.debug("\tContract: ${contractClass.canonicalName}")
-    logger.debug("\tService: ${service.javaClass}")
-    logger.debug("\tAddress: ${serviceAddress}")
+    logger.info("Registering service")
 
     contractClass.methods.forEach { method ->
-      logger.debug("Registering consumer $serviceAddress.${method.name}")
+      val serviceAddress = if (qualifierPrefix != null)
+        "$qualifierPrefix@${Services.getServiceAddress(method)}"
+      else
+        Services.getServiceAddress(method)
+
+      logger.info("Registering service consumer at address $serviceAddress")
 
       val handler = GenericActionHandler(service, method)
       injector.injectMembers(handler)
 
-      println(handler);
-
-      vertx.eventBus().consumer<Buffer>("$serviceAddress.${method.name}",
-          fiberHandler(handler))
+      vertx.eventBus().consumer<Buffer>(serviceAddress, fiberHandler(handler))
     }
-
-    vertx.eventBus().consumer<Buffer>("a",
-        fiberHandler {
-          println("handling a")
-          it.reply(null)
-        })
   }
 }

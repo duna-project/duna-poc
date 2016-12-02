@@ -4,12 +4,13 @@ import co.paralleluniverse.fibers.Suspendable
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.duna.core.io.BufferInputStream
 import io.duna.core.io.BufferOutputStream
-import io.duna.core.service.invocation.MethodCallDemuxing
-import io.duna.core.service.invocation.ServiceCallDelegation
+import io.duna.core.implementation.invocation.MethodCallDemuxing
+import io.duna.core.implementation.invocation.ServiceCallDelegation
 import io.vertx.core.Handler
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.eventbus.Message
 import net.bytebuddy.ByteBuddy
+import net.bytebuddy.description.annotation.AnnotationDescription
 import net.bytebuddy.implementation.FieldAccessor
 import net.bytebuddy.matcher.ElementMatchers
 import java.lang.reflect.Method
@@ -28,17 +29,22 @@ internal class GenericActionHandler<T>(private val service: T,
   val serviceCallDelegation: ServiceCallDelegation
 
   init {
+    val suspendableAnnotation = AnnotationDescription.Builder.ofType(Suspendable::class.java).build()
+
+    // @formatter:off
     serviceCallDelegation = ByteBuddy()
       .subclass(Any::class.java)
       .defineField("method", Method::class.java)
       .implement(ServiceCallDelegation::class.java)
-      .intercept(FieldAccessor.ofField("method"))
+        .intercept(FieldAccessor.ofField("method"))
       .method(ElementMatchers.named("invoke"))
-      .intercept(MethodCallDemuxing(method))
+        .intercept(MethodCallDemuxing(method))
+        .annotateMethod(suspendableAnnotation)
       .make()
       .load(ClassLoader.getSystemClassLoader())
       .loaded
       .newInstance() as ServiceCallDelegation
+    // @formatter:on
 
     serviceCallDelegation.setMethod(method)
   }
@@ -52,7 +58,10 @@ internal class GenericActionHandler<T>(private val service: T,
 
     val parameters = arrayOfNulls<Any>(method.parameterCount)
 
+    parser.nextToken() // START_OBJECT
     method.parameterTypes.forEachIndexed { i, clazz ->
+      parser.nextToken() // FIELD_NAME
+      parser.nextToken() // FIELD_VALUE
       parameters[i] = parser.readValueAs(clazz)
     }
 

@@ -5,18 +5,21 @@ import io.duna.core.service.Service
 import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner
 import io.github.lukehutch.fastclasspathscanner.scanner.ScanResult
 
-internal object ClasspathScanResults {
+/**
+ * Scans the classpath for contracts and services.
+ */
+internal object ClasspathScanner {
 
   private var scanResult: ScanResult = FastClasspathScanner()
       .scan(Runtime.getRuntime().availableProcessors())
 
-  fun getAllContracts(): List<String> = scanResult
+  fun getAllServices(): List<String> = scanResult
       .getNamesOfClassesWithAnnotation(Contract::class.java)
 
-  fun getLocalContracts(): List<String> = getAllContracts()
+  fun getLocalServices(): List<String> = getAllServices()
       .filter { getImplementationsInClasspath(it).isNotEmpty() }
 
-  fun getRemoteContracts(): List<String> = getAllContracts()
+  fun getRemoteServices(): List<String> = getAllServices()
       .filter { getImplementationsInClasspath(it).isEmpty() }
 
   fun getImplementationsInClasspath(contract: String): Set<String> = scanResult

@@ -5,7 +5,7 @@ import com.google.inject.BindingAnnotation
 import com.google.inject.Scopes
 import com.google.inject.UnsafeTypeLiteral
 import com.google.inject.multibindings.Multibinder
-import io.duna.core.classpath.ClasspathScanResults
+import io.duna.core.classpath.ClasspathScanner
 import io.duna.core.service.AllServices
 import io.duna.core.util.Services
 import org.apache.logging.log4j.LogManager
@@ -17,33 +17,29 @@ internal class LocalServiceBinderModule : AbstractModule() {
   private val logger = LogManager.getLogger(LocalServiceBinderModule::class.java)
 
   override fun configure() {
-    logger.info("Registering local services...")
+    logger.info("Binding local services")
 
-    val localServicesSetBinder = Multibinder.newSetBinder(binder(), Any::class.java, AllServices::class.java)
-
-    val localContracts = ClasspathScanResults.getLocalContracts()
+    val localContracts = ClasspathScanner.getLocalServices()
         .map { Class.forName(it) }
 
     localContracts.forEach contractForEach@ { contractClass ->
       if (!contractClass.isInterface && !Modifier.isAbstract(contractClass.modifiers)) {
-        logger.error("${contractClass.canonicalName} not registered. It isn't an interface nor an abstract class.")
+        logger.error("Unable to bind ${contractClass.canonicalName}. " +
+          "Contracts must be either an interface or abstract class.")
         return@contractForEach
       }
 
-      logger.info("\tContract ${contractClass.canonicalName}:")
-
       val contractTypeLiteral = UnsafeTypeLiteral(contractClass)
 
-      ClasspathScanResults
+      ClasspathScanner
           .getImplementationsInClasspath(contractClass)
           .map { Class.forName(it) }
           .forEach serviceForEach@ { serviceClass ->
             if (serviceClass.isInterface || Modifier.isAbstract(serviceClass.modifiers)) {
-              logger.error("${serviceClass.canonicalName} isn't a concrete class, and therefore cannot be instantiated.")
+              logger.error("Unable to bind ${serviceClass.canonicalName}. " +
+                "Implementations must be instantiable.")
               return@serviceForEach
             }
-
-            logger.info("\t  • Service ${serviceClass.canonicalName}")
 
             val qualifier = Services.getQualifier(serviceClass)
 
@@ -58,10 +54,10 @@ internal class LocalServiceBinderModule : AbstractModule() {
                   .`in`(Scopes.SINGLETON)
             }
 
-            localServicesSetBinder.addBinding()
-                .to(serviceClass)
-                .`in`(Scopes.SINGLETON)
+            logger.info("Bound ${contractClass.canonicalName} -> ${serviceClass.canonicalName}")
           }
     }
+
+    logger.info("Local services bound")
   }
 }

@@ -2,42 +2,42 @@ package io.duna.core.inject
 
 import com.google.inject.AbstractModule
 import com.google.inject.UnsafeTypeLiteral
-import io.duna.core.classpath.ClasspathScanResults
-import io.duna.core.proxy.ProxyCallInterceptor
-import io.duna.core.proxy.ProxyClassLoader
+import io.duna.core.classpath.ClasspathScanner
+import io.duna.core.proxy.RemoteServiceProxyFactory
 import org.apache.logging.log4j.LogManager
 import java.lang.reflect.Modifier
-import java.lang.reflect.Proxy
 
 internal class RemoteServiceBinderModule : AbstractModule() {
 
-  private val logger = LogManager.getLogger(LocalServiceBinderModule::class.java)
+  private val logger = LogManager.getLogger(RemoteServiceBinderModule::class.java)
+
+  private val classLoader = RemoteServiceProxyFactory()
 
   /**
    * TODO Support qualifiers for proxies
    */
   override fun configure() {
-    logger.info("Registering remote services...")
+    logger.info("Binding proxies for remote services")
 
-    val remoteContracts = ClasspathScanResults.getRemoteContracts()
+    val remoteContracts = ClasspathScanner.getRemoteServices()
         .map { Class.forName(it) }
 
-    remoteContracts.forEach contractForEach@ { contract ->
-      if (!contract.isInterface && !Modifier.isAbstract(contract.modifiers)) {
-        logger.error("${contract.canonicalName} not registered. It isn't an interface nor an abstract class.")
+    remoteContracts.forEach contractForEach@ { contractClass ->
+      if (!contractClass.isInterface && !Modifier.isAbstract(contractClass.modifiers)) {
+        logger.error("Unable to bind ${contractClass.canonicalName}. " +
+          "Contracts must be either an interface or abstract class.")
         return@contractForEach
       }
 
-      logger.info("\tContract ${contract.canonicalName}:")
+      val contractTypeLiteral = UnsafeTypeLiteral(contractClass)
+      val proxyClass = classLoader.loadProxyForService(contractClass).newInstance()
 
-      val contractTypeLiteral = UnsafeTypeLiteral(contract)
-      val serviceProxy = Proxy.newProxyInstance(ClassLoader.getSystemClassLoader(),
-          arrayOf(contract), ProxyCallInterceptor())
+      logger.info("Bound proxy for ${contractClass.canonicalName}")
 
-      logger.info("\t  • Proxy ${contract.canonicalName}")
-
-      requestInjection(Proxy.getInvocationHandler(serviceProxy))
-      bind(contractTypeLiteral).toInstance(serviceProxy)
+      requestInjection(proxyClass)
+      bind(contractTypeLiteral).toInstance(proxyClass)
     }
+
+    logger.info("Proxies for remote services bound")
   }
 }
