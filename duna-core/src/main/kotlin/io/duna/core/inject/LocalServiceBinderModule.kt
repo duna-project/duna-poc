@@ -1,20 +1,18 @@
 package io.duna.core.inject
 
 import com.google.inject.AbstractModule
-import com.google.inject.BindingAnnotation
 import com.google.inject.Scopes
 import com.google.inject.UnsafeTypeLiteral
-import com.google.inject.multibindings.Multibinder
 import io.duna.core.classpath.ClasspathScanner
-import io.duna.core.service.AllServices
 import io.duna.core.util.Services
-import org.apache.logging.log4j.LogManager
 import java.lang.reflect.Modifier
-import javax.inject.Qualifier
+import java.util.logging.LogManager
 
-internal class LocalServiceBinderModule : AbstractModule() {
+internal object LocalServiceBinderModule : AbstractModule() {
 
-  private val logger = LogManager.getLogger(LocalServiceBinderModule::class.java)
+  @JvmStatic
+  private val logger = LogManager.getLogManager()
+    .getLogger(LocalServiceBinderModule::class.java.name)
 
   override fun configure() {
     logger.info("Binding local services")
@@ -24,7 +22,7 @@ internal class LocalServiceBinderModule : AbstractModule() {
 
     localContracts.forEach contractForEach@ { contractClass ->
       if (!contractClass.isInterface && !Modifier.isAbstract(contractClass.modifiers)) {
-        logger.error("Unable to bind ${contractClass.canonicalName}. " +
+        logger.warning("Unable to bind ${contractClass.canonicalName}. " +
           "Contracts must be either an interface or abstract class.")
         return@contractForEach
       }
@@ -36,7 +34,7 @@ internal class LocalServiceBinderModule : AbstractModule() {
           .map { Class.forName(it) }
           .forEach serviceForEach@ { serviceClass ->
             if (serviceClass.isInterface || Modifier.isAbstract(serviceClass.modifiers)) {
-              logger.error("Unable to bind ${serviceClass.canonicalName}. " +
+              logger.warning("Unable to bind ${serviceClass.canonicalName}. " +
                 "Implementations must be instantiable.")
               return@serviceForEach
             }

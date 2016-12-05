@@ -1,3 +1,8 @@
+out
+.vertx
+classes
+**/build/
+
 ### Idea template
 .idea
 *.iml
@@ -7,7 +12,6 @@
 # Created by .ignore support plugin (hsz.mobi)
 ### Gradle template
 .gradle
-build/
 
 # Ignore Gradle GUI config
 gradle-app.setting

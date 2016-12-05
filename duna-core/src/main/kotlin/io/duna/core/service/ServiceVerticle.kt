@@ -1,23 +1,15 @@
 package io.duna.core.service
 
 import co.paralleluniverse.fibers.Suspendable
-import co.paralleluniverse.kotlin.fiber
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.google.inject.BindingAnnotation
 import com.google.inject.Injector
-import io.duna.core.io.BufferInputStream
-import io.duna.core.io.BufferOutputStream
 import io.duna.core.service.handlers.GenericActionHandler
 import io.duna.core.util.Services
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.eventbus.EventBus
 import io.vertx.ext.sync.Sync.fiberHandler
 import io.vertx.ext.sync.SyncVerticle
-import net.bytebuddy.ByteBuddy
-import org.apache.logging.log4j.LogManager
-import java.util.*
+import java.util.logging.LogManager
 import javax.inject.Inject
-import javax.inject.Qualifier
 
 /**
  * Service façade responsible for receiving [EventBus] events and
@@ -26,14 +18,14 @@ import javax.inject.Qualifier
 class ServiceVerticle(private val contractClass: Class<*>,
                       private val service: Any) : SyncVerticle() {
 
-  private val logger = LogManager.getLogger(service.javaClass)
+  private val logger = LogManager.getLogManager().getLogger(service.javaClass.name)
 
   @Inject
   lateinit var injector: Injector
 
   @Suspendable
   override fun start() {
-    val qualifierPrefix = Services.getQualifier(service.javaClass)?.javaClass?.name
+    val qualifierPrefix = Services.getQualifier(service.javaClass)?.javaClass?.simpleName
 
     logger.info("Registering service")
 

@@ -5,7 +5,6 @@ import io.duna.core.service.Address
 import io.duna.core.service.Service
 import java.lang.reflect.Method
 import javax.inject.Qualifier
-import kotlin.reflect.jvm.kotlinFunction
 
 object Services {
 

@@ -4,12 +4,14 @@ import com.google.inject.AbstractModule
 import com.google.inject.UnsafeTypeLiteral
 import io.duna.core.classpath.ClasspathScanner
 import io.duna.core.proxy.RemoteServiceProxyFactory
-import org.apache.logging.log4j.LogManager
 import java.lang.reflect.Modifier
+import java.util.logging.LogManager
 
-internal class RemoteServiceBinderModule : AbstractModule() {
+internal object RemoteServiceBinderModule : AbstractModule() {
 
-  private val logger = LogManager.getLogger(RemoteServiceBinderModule::class.java)
+  @JvmStatic
+  private val logger = LogManager.getLogManager()
+    .getLogger(RemoteServiceBinderModule::class.java.name)
 
   private val classLoader = RemoteServiceProxyFactory()
 
@@ -24,7 +26,7 @@ internal class RemoteServiceBinderModule : AbstractModule() {
 
     remoteContracts.forEach contractForEach@ { contractClass ->
       if (!contractClass.isInterface && !Modifier.isAbstract(contractClass.modifiers)) {
-        logger.error("Unable to bind ${contractClass.canonicalName}. " +
+        logger.warning("Unable to bind ${contractClass.canonicalName}. " +
           "Contracts must be either an interface or abstract class.")
         return@contractForEach
       }

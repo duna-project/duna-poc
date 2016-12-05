@@ -1,0 +1,22 @@
+buildscript {
+  repositories { jcenter() }
+
+  dependencies {
+    classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.0-M2'
+  }
+}
+
+description = "The Duna Java Agent"
+
+dependencies {
+  compile project(':duna-annotations')
+
+  compile "net.bytebuddy:byte-buddy:${versions.byteBuddy}"
+  compile "co.paralleluniverse:quasar-core:${versions.quasar}:jdk8", {
+    transitive = false
+  }
+
+  testCompile "org.junit.jupiter:junit-jupiter-api:${versions.junit}"
+  testCompile "org.junit.jupiter:junit-jupiter-engine:${versions.junit}"
+  testCompile "net.bytebuddy:byte-buddy-agent:${versions.byteBuddy}"
+}
