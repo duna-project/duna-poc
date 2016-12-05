@@ -13,9 +13,20 @@ buildscript {
 apply plugin: 'kotlin'
 apply plugin: 'org.jetbrains.dokka'
 
+sourceSets {
+  echo
+  caller
+}
+
 dependencies {
   compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:${versions.kotlin}"
   compile project(':duna-core')
+
+  callerCompile sourceSets.main.runtimeClasspath
+  callerCompile sourceSets.echo.output
+  callerCompile "co.paralleluniverse:quasar-kotlin:0.7.7"
+
+  echoCompile sourceSets.main.runtimeClasspath
 
   testCompile "org.junit.jupiter:junit-jupiter-api:${versions.junit}"
   testCompile "org.junit.jupiter:junit-jupiter-engine:${versions.junit}"

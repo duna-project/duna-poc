@@ -16,6 +16,7 @@ import net.bytebuddy.implementation.bind.annotation.Origin
 import net.bytebuddy.implementation.bind.annotation.RuntimeType
 import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
+import java.util.logging.Logger
 
 /**
  * Interceptor used to forward service calls to remote instances.
@@ -28,11 +29,12 @@ internal object RemoteServiceCallInterceptor {
 
   @RuntimeType
   @Throws(SuspendExecution::class, InterruptedException::class)
-  fun intercept(@FieldValue("vertx") vertx: Vertx,
+  fun intercept(@FieldValue("logger") logger: Logger,
                 @FieldValue("objectMapper") objectMapper: ObjectMapper,
                 @Origin(cache = true) method: Method,
                 @AllArguments vararg arguments: Any?): Any? {
 
+    val vertx = Vertx.currentContext().owner()
     val outBuffer = BufferOutputStream(Buffer.buffer(1024))
     val generator = objectMapper.factory.createGenerator(outBuffer)
 

@@ -7,11 +7,11 @@ import net.bytebuddy.agent.builder.AgentBuilder;
 
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
+import java.lang.ref.WeakReference;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
-import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
-import static net.bytebuddy.matcher.ElementMatchers.isInterface;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
  * The Duna java agent.
@@ -20,48 +20,58 @@ import static net.bytebuddy.matcher.ElementMatchers.isInterface;
  */
 public class DunaJavaAgent {
 
-    private static final DunaJavaAgent INSTANCE = new DunaJavaAgent();
-
     private static final Logger LOGGER = LogManager.getLogManager()
         .getLogger(DunaJavaAgent.class.getName());
 
-    private ClassFileTransformer classFileTransformer;
+    private static volatile boolean ACTIVE = false;
 
-    private Instrumentation instrumentation;
+    private static WeakReference<ClassFileTransformer> classFileTransformer;
+
+    private static WeakReference<Instrumentation> instrumentation;
 
     public static void premain(String args, Instrumentation instrumentation) {
-        LOGGER.fine("Attaching the Duna JavaAgent at bootstrap");
-        INSTANCE.install(args, instrumentation);
+        LOGGER.fine(() -> "Attaching the Duna java agent at bootstrap");
+        install(args, instrumentation);
     }
 
-    private void install(String args, Instrumentation instrumentation) {
-        classFileTransformer = new AgentBuilder.Default()
+    public static void agentmain(String args, Instrumentation instrumentation) {
+        LOGGER.fine(() -> "Attaching the Duna java agent to a running VM");
+        install(args, instrumentation);
+    }
+
+    private static void install(String args, Instrumentation instrumentation) {
+        if (!instrumentation.isRetransformClassesSupported())
+            LOGGER.severe(() -> "Class retransformation isn't supported by this VM");
+
+        classFileTransformer = new WeakReference<ClassFileTransformer>(new AgentBuilder.Default()
             .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
             .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
-            .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
+            .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
             .with(new AgentInstrumentationListener())
-            .type(isAnnotatedWith(Contract.class).and(isInterface()))
+            .type(isAnnotatedWith(Contract.class).and(isInterface().or(isAbstract())))
             .transform(new SuspendableMethodsTransformer())
-            .installOn(instrumentation);
+            .installOn(instrumentation));
 
-        this.instrumentation = instrumentation;
+        ACTIVE = true;
+
+        DunaJavaAgent.instrumentation = new WeakReference<Instrumentation>(instrumentation);
     }
 
     public Instrumentation getInstrumentation() {
         if (instrumentation == null)
-            throw new UnsupportedOperationException("Agent not installed.");
+            throw new UnsupportedOperationException("Agent not installed");
 
-        return instrumentation;
+        return instrumentation.get();
     }
 
     public ClassFileTransformer getClassFileTransformer() {
         if (classFileTransformer == null)
-            throw new UnsupportedOperationException("Agent not installed.");
+            throw new UnsupportedOperationException("Agent not installed");
 
-        return classFileTransformer;
+        return classFileTransformer.get();
     }
 
-    public boolean isAttached() {
-        return instrumentation != null;
+    public static boolean isActive() {
+        return ACTIVE;
     }
 }

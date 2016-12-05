@@ -26,18 +26,18 @@ public class AgentInstrumentationListener implements AgentBuilder.Listener {
                                  ClassLoader classLoader,
                                  JavaModule module,
                                  DynamicType dynamicType) {
-        LOGGER.fine(() -> String.format("%s will be instrumented.", typeDescription));
+        LOGGER.fine(() -> String.format("%s will be instrumented", typeDescription));
     }
 
     @Override
     public void onIgnored(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module) {
-        LOGGER.finer(() -> String.format("Instrumentation ignored type %s.", typeDescription));
+        LOGGER.finest(() -> String.format("Instrumentation ignored type %s", typeDescription));
     }
 
     @Override
     public void onError(String typeName, ClassLoader classLoader,
                         JavaModule module, Throwable throwable) {
-        LOGGER.warning(() -> String.format("Error while instrumenting %s.", typeName));
+        LOGGER.warning(() -> String.format("Error while instrumenting %s", typeName));
         LOGGER.fine(() -> {
             StringWriter errorWriter = new StringWriter();
             throwable.printStackTrace(new PrintWriter(errorWriter));
@@ -48,6 +48,6 @@ public class AgentInstrumentationListener implements AgentBuilder.Listener {
 
     @Override
     public void onComplete(String typeName, ClassLoader classLoader, JavaModule module) {
-        LOGGER.finer(() -> String.format("Instrumentation of %s complete.", typeName));
+        LOGGER.finest(() -> String.format("Instrumentation of %s complete", typeName));
     }
 }

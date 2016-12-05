@@ -1,5 +1,6 @@
 package io.duna.core.classpath
 
+import com.google.inject.BindingAnnotation
 import io.duna.core.service.Contract
 import io.duna.core.service.Service
 import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner
@@ -29,4 +30,18 @@ internal object ClasspathScanner {
   fun getImplementationsInClasspath(contract: Class<*>): Set<String> = scanResult
       .getNamesOfClassesImplementing(contract)
       .intersect(scanResult.getNamesOfClassesWithAnnotation(Service::class.java))
+
+  fun getImplementation(contract: String) =
+    getImplementationsInClasspath(contract)
+      .minus(scanResult.getNamesOfClassesWithAnnotationsAnyOf(*scanResult
+        .getNamesOfAnnotationsWithMetaAnnotation(BindingAnnotation::class.java)
+        .toTypedArray()))
+      .singleOrNull()
+
+  fun getImplementation(contract: String, qualifier: String) =
+    getImplementationsInClasspath(contract)
+      .filter { contract ->
+        scanResult.getNamesOfAnnotationsOnClass(contract)
+          .filter { it.endsWith(qualifier) }.isNotEmpty()
+      }.singleOrNull()
 }

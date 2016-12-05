@@ -19,27 +19,27 @@ internal object RemoteServiceBinderModule : AbstractModule() {
    * TODO Support qualifiers for proxies
    */
   override fun configure() {
-    logger.info("Binding proxies for remote services")
+    logger.info { "Binding proxies for remote services" }
 
     val remoteContracts = ClasspathScanner.getRemoteServices()
         .map { Class.forName(it) }
 
     remoteContracts.forEach contractForEach@ { contractClass ->
       if (!contractClass.isInterface && !Modifier.isAbstract(contractClass.modifiers)) {
-        logger.warning("Unable to bind ${contractClass.canonicalName}. " +
-          "Contracts must be either an interface or abstract class.")
+        logger.warning { "Unable to bind ${contractClass.canonicalName}. " +
+          "Contracts must be either an interface or abstract class." }
         return@contractForEach
       }
 
       val contractTypeLiteral = UnsafeTypeLiteral(contractClass)
       val proxyClass = classLoader.loadProxyForService(contractClass).newInstance()
 
-      logger.info("Bound proxy for ${contractClass.canonicalName}")
+      logger.info { "Bound proxy for ${contractClass.canonicalName}" }
 
       requestInjection(proxyClass)
       bind(contractTypeLiteral).toInstance(proxyClass)
     }
 
-    logger.info("Proxies for remote services bound")
+    logger.info { "Proxies for remote services bound" }
   }
 }

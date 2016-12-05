@@ -15,15 +15,15 @@ internal object LocalServiceBinderModule : AbstractModule() {
     .getLogger(LocalServiceBinderModule::class.java.name)
 
   override fun configure() {
-    logger.info("Binding local services")
+    logger.info { "Binding local services" }
 
     val localContracts = ClasspathScanner.getLocalServices()
         .map { Class.forName(it) }
 
     localContracts.forEach contractForEach@ { contractClass ->
       if (!contractClass.isInterface && !Modifier.isAbstract(contractClass.modifiers)) {
-        logger.warning("Unable to bind ${contractClass.canonicalName}. " +
-          "Contracts must be either an interface or abstract class.")
+        logger.warning { "Unable to bind ${contractClass.canonicalName}. " +
+          "Contracts must be either an interface or abstract class." }
         return@contractForEach
       }
 
@@ -34,8 +34,8 @@ internal object LocalServiceBinderModule : AbstractModule() {
           .map { Class.forName(it) }
           .forEach serviceForEach@ { serviceClass ->
             if (serviceClass.isInterface || Modifier.isAbstract(serviceClass.modifiers)) {
-              logger.warning("Unable to bind ${serviceClass.canonicalName}. " +
-                "Implementations must be instantiable.")
+              logger.warning { "Unable to bind ${serviceClass.canonicalName}. " +
+                "Implementations must be instantiable." }
               return@serviceForEach
             }
 
@@ -52,10 +52,10 @@ internal object LocalServiceBinderModule : AbstractModule() {
                   .`in`(Scopes.SINGLETON)
             }
 
-            logger.info("Bound ${contractClass.canonicalName} -> ${serviceClass.canonicalName}")
+            logger.info { "Bound ${contractClass.canonicalName} -> ${serviceClass.canonicalName}" }
           }
     }
 
-    logger.info("Local services bound")
+    logger.info { "Local services bound" }
   }
 }

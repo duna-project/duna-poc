@@ -18,7 +18,7 @@ import javax.inject.Inject
 class ServiceVerticle(private val contractClass: Class<*>,
                       private val service: Any) : SyncVerticle() {
 
-  private val logger = LogManager.getLogManager().getLogger(service.javaClass.name)
+  private val logger = LogManager.getLogManager().getLogger(contractClass.name)
 
   @Inject
   lateinit var injector: Injector
@@ -27,7 +27,7 @@ class ServiceVerticle(private val contractClass: Class<*>,
   override fun start() {
     val qualifierPrefix = Services.getQualifier(service.javaClass)?.javaClass?.simpleName
 
-    logger.info("Registering service")
+    logger.info { "Registering service $contractClass" }
 
     contractClass.methods.forEach { method ->
       val serviceAddress = if (qualifierPrefix != null)
@@ -35,7 +35,7 @@ class ServiceVerticle(private val contractClass: Class<*>,
       else
         Services.getServiceAddress(method)
 
-      logger.info("Registering service consumer at address $serviceAddress")
+      logger.fine { "Registering service consumer at address $serviceAddress" }
 
       val handler = GenericActionHandler(service, method)
       injector.injectMembers(handler)

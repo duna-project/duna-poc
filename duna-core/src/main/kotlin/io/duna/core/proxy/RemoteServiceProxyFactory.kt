@@ -10,6 +10,7 @@ import net.bytebuddy.description.modifier.Visibility
 import net.bytebuddy.implementation.MethodDelegation
 import net.bytebuddy.matcher.ElementMatchers.isDeclaredBy
 import net.bytebuddy.matcher.ElementMatchers.not
+import java.util.logging.Logger
 import javax.inject.Inject
 
 /**
@@ -17,9 +18,7 @@ import javax.inject.Inject
  *
  * @author Carlos Eduardo Melo <[ceduardo.melo@redime.com.br]>
  */
-class RemoteServiceProxyFactory(private val proxyNamingStrategy: ProxyNamingStrategy) {
-
-  constructor(): this(DefaultProxyNamingStrategy())
+class RemoteServiceProxyFactory() {
 
   @Suppress("UNCHECKED_CAST")
   fun <T> loadProxyForService(contractClass: Class<T>): Class<T> {
@@ -35,10 +34,9 @@ class RemoteServiceProxyFactory(private val proxyNamingStrategy: ProxyNamingStra
     return ByteBuddy()
       .subclass(Any::class.java)
       .implement(contractClass)
-      .name(proxyNamingStrategy.getProxyName(contractClass))
 
       // Proxy fields
-      .defineField("vertx", Vertx::class.java, Visibility.PRIVATE)
+      .defineField("logger", Logger::class.java, Visibility.PRIVATE)
         .annotateField(injectAnnotation)
       .defineField("objectMapper", ObjectMapper::class.java, Visibility.PRIVATE)
         .annotateField(injectAnnotation)

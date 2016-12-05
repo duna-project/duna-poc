@@ -2,6 +2,7 @@ package io.duna.core.service.handlers
 
 import co.paralleluniverse.fibers.Suspendable
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.google.inject.Inject
 import io.duna.core.io.BufferInputStream
 import io.duna.core.io.BufferOutputStream
 import io.duna.core.implementation.invocation.MethodCallDemuxing
@@ -15,7 +16,7 @@ import net.bytebuddy.implementation.FieldAccessor
 import net.bytebuddy.matcher.ElementMatchers
 import java.lang.reflect.Method
 import java.util.*
-import javax.inject.Inject
+import java.util.logging.Logger
 
 /**
  * Handles a request goTo a service and replies the result.
@@ -25,6 +26,9 @@ internal class GenericActionHandler<T>(private val service: T,
 
   @Inject
   lateinit var objectMapper: ObjectMapper
+
+  @Inject
+  lateinit var logger: Logger
 
   val serviceCallDelegation: ServiceCallDelegation
 
@@ -51,7 +55,8 @@ internal class GenericActionHandler<T>(private val service: T,
 
   @Suspendable
   override fun handle(event: Message<Buffer>) {
-    println("Handling request")
+    logger.fine { "Handling request to " +
+      "${method.declaringClass.name}.${method.name}(${method.parameterTypes.joinToString(", ")})" }
 
     val inBuffer = BufferInputStream(event.body())
     val parser = objectMapper.factory.createParser(inBuffer)
@@ -65,23 +70,20 @@ internal class GenericActionHandler<T>(private val service: T,
       parameters[i] = parser.readValueAs(clazz)
     }
 
-    println("Method $method")
-    println("Service $service")
-    println("Parameters " + Arrays.toString(parameters))
+    logger.finer { "Parameters received: [" + parameters.joinToString(",") + "]" }
 
     val result = serviceCallDelegation.invoke<Any>(service, *parameters)
 
-    println("Result $result")
     if (method.returnType != Unit::class.java) {
       val outBuffer = BufferOutputStream(Buffer.buffer(1024))
       val generator = objectMapper.factory.createGenerator(outBuffer)
 
       generator.writeObject(result)
 
-      println("Replying with " + outBuffer.buffer)
+      logger.finer { "Reply to ${event.replyAddress()}: $result" }
       event.reply(outBuffer.buffer)
     } else {
-      println("Replying with null")
+      logger.finer { "Reply to ${event.replyAddress()}: null" }
       event.reply(null)
     }
   }
