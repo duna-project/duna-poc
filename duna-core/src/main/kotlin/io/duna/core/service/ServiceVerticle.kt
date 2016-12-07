@@ -8,7 +8,7 @@ import io.vertx.core.buffer.Buffer
 import io.vertx.core.eventbus.EventBus
 import io.vertx.ext.sync.Sync.fiberHandler
 import io.vertx.ext.sync.SyncVerticle
-import java.util.logging.LogManager
+import java.util.logging.Logger
 import javax.inject.Inject
 
 /**
@@ -18,7 +18,8 @@ import javax.inject.Inject
 class ServiceVerticle(private val contractClass: Class<*>,
                       private val service: Any) : SyncVerticle() {
 
-  private val logger = LogManager.getLogManager().getLogger(contractClass.name)
+  @Inject
+  lateinit var logger: Logger
 
   @Inject
   lateinit var injector: Injector
@@ -27,7 +28,7 @@ class ServiceVerticle(private val contractClass: Class<*>,
   override fun start() {
     val qualifierPrefix = Services.getQualifier(service.javaClass)?.javaClass?.simpleName
 
-    logger.info { "Registering service $contractClass" }
+    logger.info { "Registering verticle for service $contractClass" }
 
     contractClass.methods.forEach { method ->
       val serviceAddress = if (qualifierPrefix != null)
@@ -35,7 +36,7 @@ class ServiceVerticle(private val contractClass: Class<*>,
       else
         Services.getServiceAddress(method)
 
-      logger.fine { "Registering service consumer at address $serviceAddress" }
+      logger.fine { "Registering consumer at address $serviceAddress" }
 
       val handler = GenericActionHandler(service, method)
       injector.injectMembers(handler)

@@ -2,17 +2,10 @@ package io.duna.instrument;
 
 import co.paralleluniverse.fibers.Suspendable;
 import io.duna.test.utils.ClassFileExtraction;
-import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.agent.builder.AgentBuilder;
-import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
-import net.bytebuddy.implementation.MethodCall;
-import net.bytebuddy.matcher.ElementMatchers;
-import net.bytebuddy.utility.JavaModule;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,8 +15,9 @@ import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Method;
 
 import static net.bytebuddy.dynamic.loading.ClassInjector.DEFAULT_PROTECTION_DOMAIN;
-import static net.bytebuddy.matcher.ElementMatchers.*;
-import static net.bytebuddy.matcher.ElementMatchers.none;
+import static net.bytebuddy.matcher.ElementMatchers.is;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class SuspendableMethodTransformerTest {
@@ -49,60 +43,40 @@ public class SuspendableMethodTransformerTest {
 
     @Test
     public void testSuspendableMethodRebasing() throws Exception {
-        assertTrue(ByteBuddyAgent.install() instanceof Instrumentation);
+        assertNotNull(ByteBuddyAgent.install());
 
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
             .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
             .with(AgentBuilder.TypeStrategy.Default.REBASE)
             .with(AgentBuilder.RedefinitionStrategy.DISABLED)
-            .with(new AgentBuilder.Listener() {
-
-                @Override
-                public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, DynamicType dynamicType) {
-                    System.out.println(typeDescription + " is instrumented");
-                }
-
-                @Override
-                public void onIgnored(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module) {
-
-                }
-
-                @Override
-                public void onError(String typeName, ClassLoader classLoader, JavaModule module, Throwable throwable) {
-                    throwable.printStackTrace();
-                }
-
-                @Override
-                public void onComplete(String typeName, ClassLoader classLoader, JavaModule module) {
-
-                }
-            })
             .type(is(SimpleInterface.class), is(classLoader))
                 .transform(new SuspendableMethodsTransformer())
             .installOnByteBuddyAgent();
 
         Class<?> iface = classLoader.loadClass(SimpleInterface.class.getName());
+        Class<?> impl = classLoader.loadClass(SimpleClass.class.getName());
 
-        System.out.println(iface.getMethod(METHOD_NAME).isDefault());
+        Method m = impl.getMethod("foo");
 
-//        Class<?> clazz = classLoader.loadClass(SimpleClass.class.getName());
-//
-//        Object instance = clazz.newInstance();
-//        iface.getMethod(METHOD_NAME).invoke(instance);
-
-        System.out.println(iface.getMethod(METHOD_NAME).isAnnotationPresent(Suspendable.class));
+        assertTrue(iface.getMethod(METHOD_NAME).isDefault());
+        assertTrue(iface.getMethod(METHOD_NAME).isAnnotationPresent(Suspendable.class));
+        assertEquals(m.invoke(impl.newInstance()), "Worked.");
     }
 
     public interface SimpleInterface {
-        default void bar() {
-            System.out.println("Works");
+        default String bar() {
+            return "Worked.";
         }
 
-        default void foo() {
-            bar();
+        default String foo() {
+            return bar();
         }
+
+        void baz();
     }
 
     public static class SimpleClass implements SimpleInterface {
+        @Override
+        public void baz() {}
     }
 }

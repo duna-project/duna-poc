@@ -3,7 +3,6 @@ package io.duna.core.proxy
 import co.paralleluniverse.fibers.Suspendable
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.duna.core.service.Contract
-import io.vertx.core.Vertx
 import net.bytebuddy.ByteBuddy
 import net.bytebuddy.description.annotation.AnnotationDescription
 import net.bytebuddy.description.modifier.Visibility
@@ -27,13 +26,23 @@ class RemoteServiceProxyFactory() {
        throw IllegalArgumentException("The @Contract must be an interface or abstract class.")
     }
 
-    val injectAnnotation = AnnotationDescription.Builder.ofType(Inject::class.java).build()
-    val suspendableAnnotation = AnnotationDescription.Builder.ofType(Suspendable::class.java).build()
+    // @Inject
+    val injectAnnotation = AnnotationDescription.Builder
+      .ofType(Inject::class.java).build()
+
+    // @Suspendable
+    val suspendableAnnotation = AnnotationDescription.Builder
+      .ofType(Suspendable::class.java).build()
+
+    // @GeneratedProxy
+    val generatedProxyAnnotation = AnnotationDescription.Builder
+      .ofType(GeneratedProxy::class.java).build()
 
     // @formatter:off
     return ByteBuddy()
       .subclass(Any::class.java)
       .implement(contractClass)
+      .annotateType(generatedProxyAnnotation)
 
       // Proxy fields
       .defineField("logger", Logger::class.java, Visibility.PRIVATE)

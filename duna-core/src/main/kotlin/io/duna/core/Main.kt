@@ -1,34 +1,24 @@
-package io.duna.core.bootstrap
+package io.duna.core
 
-import co.paralleluniverse.fibers.instrument.JavaAgent as QuasarJavaAgent
-import com.ea.agentloader.AgentLoader
-import com.ea.agentloader.AgentLoaderHotSpot
-import com.ea.agentloader.ClassPathUtils
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.inject.AbstractModule
 import com.google.inject.Guice
 import com.google.inject.Injector
-import com.google.inject.Key
 import com.typesafe.config.ConfigFactory
-import io.duna.agent.DunaJavaAgent
+import io.duna.core.bootstrap.IgniteClusterManagerProvider
+import io.duna.core.bootstrap.JavaAgentsLoader
 import io.duna.core.classpath.ClasspathScanner
 import io.duna.core.inject.LocalServiceBinderModule
 import io.duna.core.inject.RemoteServiceBinderModule
-import io.duna.core.service.Contract
-import io.duna.core.service.ServiceVerticle
 import io.duna.core.service.ServiceVerticleFactory
-import io.vertx.core.*
+import io.vertx.core.Future
+import io.vertx.core.Vertx
+import io.vertx.core.VertxOptions
 import io.vertx.core.json.Json
-import io.vertx.spi.cluster.ignite.IgniteClusterManager
-import org.apache.ignite.configuration.IgniteConfiguration
-import org.apache.ignite.logger.log4j2.Log4J2Logger
-import org.apache.ignite.spi.communication.tcp.TcpCommunicationSpi
-import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi
-import org.apache.ignite.spi.discovery.tcp.ipfinder.multicast.TcpDiscoveryMulticastIpFinder
-import org.apache.logging.log4j.Level
 import org.apache.logging.log4j.LogManager
+import co.paralleluniverse.fibers.instrument.JavaAgent as QuasarJavaAgent
 
-object Bootstrap {
+object Main {
 
   @JvmStatic
   fun main(vararg args: String) {
@@ -39,7 +29,7 @@ object Bootstrap {
     JavaAgentsLoader.attachRequiredJavaAgents()
 
     val config = ConfigFactory.load()
-    val clusterManager = IgniteClusterManagerProvider.get()
+    val clusterManager = IgniteClusterManagerProvider.create()
 
     val vertxOptions = VertxOptions()
       .setClusterManager(clusterManager)
@@ -78,8 +68,6 @@ object Bootstrap {
 
         ClasspathScanner.getLocalServices().forEach { verticle ->
           rootLogger.info { "Deploying verticle duna:$verticle" }
-
-          // TODO Support qualifiers
           res.result().deployVerticle("duna:$verticle")
         }
       })

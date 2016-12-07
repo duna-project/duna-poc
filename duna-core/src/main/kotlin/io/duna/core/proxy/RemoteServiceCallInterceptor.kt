@@ -2,6 +2,7 @@ package io.duna.core.proxy
 
 import co.paralleluniverse.fibers.SuspendExecution
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.duna.core.DunaException
 import io.duna.core.io.BufferInputStream
 import io.duna.core.io.BufferOutputStream
 import io.duna.core.util.Services
@@ -34,7 +35,9 @@ internal object RemoteServiceCallInterceptor {
                 @Origin(cache = true) method: Method,
                 @AllArguments vararg arguments: Any?): Any? {
 
-    val vertx = Vertx.currentContext().owner()
+    val vertx = Vertx.currentContext()?.owner() ?:
+      throw DunaException("There isn't a vert.x context available.")
+
     val outBuffer = BufferOutputStream(Buffer.buffer(1024))
     val generator = objectMapper.factory.createGenerator(outBuffer)
 

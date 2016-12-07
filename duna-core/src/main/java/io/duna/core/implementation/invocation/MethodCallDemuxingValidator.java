@@ -1,7 +1,6 @@
 package io.duna.core.implementation.invocation;
 
 import java.lang.reflect.Method;
-import java.util.List;
 
 /**
  *

@@ -11,7 +11,7 @@ import org.apache.logging.log4j.Level
 
 object IgniteClusterManagerProvider {
 
-  fun get(): IgniteClusterManager {
+  fun create(): IgniteClusterManager {
     val config = ConfigFactory.load()
 
     val discoverySpi = TcpDiscoverySpi()

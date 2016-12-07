@@ -4,11 +4,8 @@ import co.paralleluniverse.fibers.SuspendExecution;
 
 import java.lang.reflect.Method;
 
-/**
- * Created by carlos on 29/11/16.
- */
-public interface ServiceCallDelegation {
+public interface ServiceCallDelegation<T> {
     void setMethod(Method target);
 
-    <T> T invoke(Object target, Object ... parameters) throws SuspendExecution;
+    Object invoke(T target, Object ... parameters) throws SuspendExecution;
 }

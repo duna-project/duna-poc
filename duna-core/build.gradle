@@ -11,6 +11,7 @@ buildscript {
 }
 
 apply plugin: 'kotlin'
+apply plugin: 'groovy'
 apply plugin: 'org.jetbrains.dokka'
 
 dependencies {
@@ -46,8 +47,7 @@ dependencies {
 
   compile "com.typesafe:config:${versions.config}"
 
-  testCompile "org.junit.jupiter:junit-jupiter-api:${versions.junit}"
-  testCompile "org.junit.jupiter:junit-jupiter-engine:${versions.junit}"
+  testCompile "org.spockframework:spock-core:${versions.spock}"
   testCompile "org.mockito:mockito-core:${versions.mockito}"
 }
 

@@ -1,15 +1,20 @@
 [*]
 charset=utf-8
 end_of_line=lf
-insert_final_newline=false
+insert_final_newline=true
 indent_style=space
 indent_size=4
+trim_trailing_whitespace=true
 
-[{*.gant,*.groovy,*.gradle,*.gdsl,*.gy}]
+[{*.json,*.conf}]
 indent_style=space
 indent_size=2
 
-[{*.kt,*.kts}]
+[{*.gant,*.groovy,*.gradle,*.gy,*.gdsl}]
+indent_style=space
+indent_size=2
+
+[{*.kts,*.kt}]
 indent_style=space
 indent_size=2
 

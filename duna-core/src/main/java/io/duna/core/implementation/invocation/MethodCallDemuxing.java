@@ -23,9 +23,6 @@ import java.util.List;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static net.bytebuddy.matcher.ElementMatchers.takesArguments;
 
-/**
- * Created by carlos on 30/11/16.
- */
 public class MethodCallDemuxing implements ByteCodeAppender, Implementation {
 
     private MethodDescription target;
@@ -82,6 +79,7 @@ public class MethodCallDemuxing implements ByteCodeAppender, Implementation {
         final List<StackManipulation> paramLoadingInstructionList = new LinkedList<>();
 
         paramLoadingInstructionList.add(MethodVariableAccess.REFERENCE.loadFrom(1));
+        paramLoadingInstructionList.add(TypeCasting.to(target.getDeclaringType()));
 
         for (int i = 0; i < target.getParameters().size(); i++) {
             TypeDescription.Generic parameterType =
@@ -108,7 +106,7 @@ public class MethodCallDemuxing implements ByteCodeAppender, Implementation {
             new StackManipulation.Compound(paramLoadingInstructionList);
 
         StackManipulation methodCall = new StackManipulation.Compound(
-            parameterValidation,
+//            parameterValidation,
             parameterLoading,
             MethodInvocation.invoke(target)
         );

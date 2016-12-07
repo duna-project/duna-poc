@@ -1,7 +1,6 @@
 rootProject.name = 'duna-parent'
-include 'duna-annotations'
 include 'duna-agent'
+include 'duna-annotations'
 include 'duna-core'
 include 'duna-gradle-plugin'
 include 'examples'
-

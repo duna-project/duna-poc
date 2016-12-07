@@ -16,9 +16,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static net.bytebuddy.matcher.ElementMatchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ClassFileExtraction {
@@ -26,14 +24,14 @@ public class ClassFileExtraction {
     private static final int CA = 0xCA, FE = 0xFE, BA = 0xBA, BE = 0xBE;
 
     public static Map<String, byte[]> of(Class<?>... type) throws IOException {
-        Map<String, byte[]> result = new HashMap<String, byte[]>();
+        Map<String, byte[]> result = new HashMap<>();
         for (Class<?> aType : type) {
             result.put(aType.getName(), extract(aType));
         }
         return result;
     }
 
-    public static byte[] extract(Class<?> type, AsmVisitorWrapper asmVisitorWrapper) throws IOException {
+    private static byte[] extract(Class<?> type, AsmVisitorWrapper asmVisitorWrapper) throws IOException {
         ClassReader classReader = new ClassReader(type.getName());
         ClassWriter classWriter = new ClassWriter(classReader, AsmVisitorWrapper.NO_FLAGS);
         classReader.accept(asmVisitorWrapper.wrap(new TypeDescription.ForLoadedType(type),
@@ -45,7 +43,7 @@ public class ClassFileExtraction {
         return classWriter.toByteArray();
     }
 
-    public static byte[] extract(Class<?> type) throws IOException {
+    private static byte[] extract(Class<?> type) throws IOException {
         return extract(type, new AsmVisitorWrapper.Compound());
     }
 

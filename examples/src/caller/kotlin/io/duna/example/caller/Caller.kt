@@ -25,7 +25,7 @@ object Caller {
 
     JavaAgentsLoader.attachRequiredJavaAgents()
 
-    val clusterManager = IgniteClusterManagerProvider.get()
+    val clusterManager = IgniteClusterManagerProvider.create()
 
     val vertxOptions = VertxOptions()
       .setClusterManager(clusterManager)
