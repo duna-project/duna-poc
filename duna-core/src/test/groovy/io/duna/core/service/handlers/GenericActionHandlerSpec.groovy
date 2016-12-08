@@ -11,7 +11,7 @@ import spock.lang.Specification
 
 /**
  * Ensures the correctness of the method call delegation. Maybe
- * this should be placed under the MethodCallDemuxing responsibility.
+ * this should be placed under the DestructuringMethodCall responsibility.
  */
 class GenericActionHandlerSpec extends Specification {
 

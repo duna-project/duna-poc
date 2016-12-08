@@ -13,7 +13,11 @@ import net.bytebuddy.jar.asm.MethodVisitor;
 import net.bytebuddy.jar.asm.Opcodes;
 
 /**
- * TODO refactor this
+ * An instruction to provide a hint to the verifier about the current state of the stack map frame.
+ *
+ * TODO Support other kind of frame hints
+ *
+ * @author <a href="mailto:cemelo@redime.com.br">Carlos Eduardo Melo</a>
  */
 public enum Frame implements StackManipulation {
     SAME(Opcodes.F_SAME);

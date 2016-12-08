@@ -12,7 +12,13 @@ import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.jar.asm.MethodVisitor;
 
 /**
- * Created by carlos on 29/11/16.
+ * A stack manipulation used to add a label to the bytecode.
+ *
+ * A label can be used to perform jumps, goto, and switch instructions
+ * and mark try-catch blocks.
+ *
+ * @author <a href="mailto:cemelo@redime.com.br">Carlos Eduardo Melo</a>
+ * @see net.bytebuddy.jar.asm.Label
  */
 public class LabelAdder implements StackManipulation {
 

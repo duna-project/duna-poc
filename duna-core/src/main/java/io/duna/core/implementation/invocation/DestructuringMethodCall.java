@@ -7,6 +7,7 @@
  */
 package io.duna.core.implementation.invocation;
 
+import io.duna.core.implementation.bytecode.Jump;
 import io.duna.core.implementation.bytecode.LabelAdder;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
@@ -30,15 +31,30 @@ import java.util.List;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static net.bytebuddy.matcher.ElementMatchers.takesArguments;
 
-public class MethodCallDemuxing implements ByteCodeAppender, Implementation {
+/**
+ * A bytecode appender used to call a method by using an array's items as
+ * parameters.
+ *
+ * This instruction stacks all the items of an array, cast every item to
+ * the respective method's parameter type and calls the target method.
+ *
+ * @author <a href="mailto:cemelo@redime.com.br">Carlos Eduardo Melo</a>
+ */
+public class DestructuringMethodCall implements ByteCodeAppender, Implementation {
 
     private MethodDescription target;
 
-    public MethodCallDemuxing(MethodDescription target) {
+    /**
+     * @param target the target method
+     */
+    public DestructuringMethodCall(MethodDescription target) {
         this.target = target;
     }
 
-    public MethodCallDemuxing(Method target) {
+    /**
+     * @param target the target method
+     */
+    public DestructuringMethodCall(Method target) {
         this.target = new MethodDescription.ForLoadedMethod(target);
     }
 
@@ -53,35 +69,10 @@ public class MethodCallDemuxing implements ByteCodeAppender, Implementation {
     }
 
     @Override
-    public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
-        LabelAdder validMethodCall = new LabelAdder();
+    public Size apply(MethodVisitor methodVisitor, Context implementationContext,
+                      MethodDescription instrumentedMethod) {
 
-        StackManipulation parameterValidation = new StackManipulation.Compound(
-            FieldAccess.forField(
-                new TypeDescription.ForLoadedType(MethodCallDemuxingValidator.class)
-                    .getDeclaredFields()
-                    .filter(named("INSTANCE"))
-                    .getOnly()
-            ).read(),
-
-            MethodVariableAccess.REFERENCE.loadFrom(0),
-
-            FieldAccess.forField(
-                implementationContext
-                    .getInstrumentedType()
-                    .getDeclaredFields()
-                    .filter(named("method")).getOnly()
-            ).read(),
-
-            MethodVariableAccess.REFERENCE.loadFrom(2),
-            MethodInvocation.invoke(
-                new TypeDescription.ForLoadedType(MethodCallDemuxingValidator.class)
-                    .getDeclaredMethods()
-                    .filter(named("isValid"))
-                    .getOnly()
-            )
-            // Jump.IF_NE.goTo(validMethodCall)
-        );
+        // TODO Validate the array length against the method's param count, and param types.
 
         final List<StackManipulation> paramLoadingInstructionList = new LinkedList<>();
 
@@ -113,7 +104,6 @@ public class MethodCallDemuxing implements ByteCodeAppender, Implementation {
             new StackManipulation.Compound(paramLoadingInstructionList);
 
         StackManipulation methodCall = new StackManipulation.Compound(
-//            parameterValidation,
             parameterLoading,
             MethodInvocation.invoke(target)
         );

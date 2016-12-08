@@ -5,7 +5,7 @@
  *
  * This file is part of the Duna Project.
  */
-package io.duna.core.implementation.invocation;
+package io.duna.core.service;
 
 import co.paralleluniverse.fibers.SuspendExecution;
 

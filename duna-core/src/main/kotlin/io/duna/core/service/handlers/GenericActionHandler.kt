@@ -9,8 +9,8 @@ package io.duna.core.service.handlers
 
 import co.paralleluniverse.fibers.Suspendable
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.duna.core.implementation.invocation.MethodCallDemuxing
-import io.duna.core.implementation.invocation.ServiceCallDelegation
+import io.duna.core.implementation.invocation.DestructuringMethodCall
+import io.duna.core.service.ServiceCallDelegation
 import io.duna.core.io.BufferInputStream
 import io.duna.core.io.BufferOutputStream
 import io.vertx.core.Handler
@@ -49,7 +49,7 @@ internal class GenericActionHandler<T>(private val service: T,
       .implement(ServiceCallDelegation::class.java)
         .intercept(FieldAccessor.ofField("method"))
       .method(ElementMatchers.named("invoke"))
-        .intercept(MethodCallDemuxing(method))
+        .intercept(DestructuringMethodCall(method))
         .annotateMethod(suspendableAnnotation)
       .make()
       .load(ClassLoader.getSystemClassLoader())

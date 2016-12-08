@@ -13,7 +13,9 @@ import net.bytebuddy.jar.asm.MethodVisitor;
 import net.bytebuddy.jar.asm.Opcodes;
 
 /**
- * Created by carlos on 29/11/16.
+ * A stack manipulation for accessing the length of an array.
+ *
+ * @author <a href="mailto:cemelo@redime.com.br">Carlos Eduardo Melo</a>
  */
 public enum ArrayLength implements StackManipulation {
     INSTANCE;
