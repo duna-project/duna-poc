@@ -11,3 +11,5 @@ include 'duna-annotations'
 include 'duna-core'
 include 'duna-gradle-plugin'
 include 'examples'
+include 'duna-rest'
+

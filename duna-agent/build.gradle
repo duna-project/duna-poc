@@ -27,3 +27,17 @@ dependencies {
   testCompile "org.junit.jupiter:junit-jupiter-engine:${versions.junit}"
   testCompile "net.bytebuddy:byte-buddy-agent:${versions.byteBuddy}"
 }
+
+jar {
+  manifest {
+    attributes(
+      'Agentmain-Class': 'io.duna.agent.DunaJavaAgent',
+      'Premain-Class': 'io.duna.agent.DunaJavaAgent',
+      'Can-Redefine-Classes': 'true',
+      'Can-Retransform-Classes': 'true',
+      'Can-Set-Native-Method-Prefix': 'true',
+      'Implementation-Title': "Duna Java Agent",
+      'Implementation-Version': rootProject.version
+    )
+  }
+}

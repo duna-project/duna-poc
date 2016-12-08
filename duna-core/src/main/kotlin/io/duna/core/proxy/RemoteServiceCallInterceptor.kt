@@ -23,6 +23,7 @@ import net.bytebuddy.implementation.bind.annotation.FieldValue
 import net.bytebuddy.implementation.bind.annotation.Origin
 import net.bytebuddy.implementation.bind.annotation.RuntimeType
 import java.lang.reflect.Method
+import java.nio.charset.Charset
 import java.util.concurrent.ConcurrentHashMap
 import java.util.logging.Logger
 
@@ -41,6 +42,8 @@ internal object RemoteServiceCallInterceptor {
                 @FieldValue("objectMapper") objectMapper: ObjectMapper,
                 @Origin(cache = true) method: Method,
                 @AllArguments vararg arguments: Any?): Any? {
+
+    logger.fine { "Intercepting method $method" }
 
     val vertx = Vertx.currentContext()?.owner() ?:
       throw DunaException("There isn't a vert.x context available.")
@@ -70,9 +73,15 @@ internal object RemoteServiceCallInterceptor {
 
     // TODO Add support for request filters
 
+    logger.info { "Sending request to $serviceAddress" }
+    logger.finer { "Request: ${outBuffer.buffer.toString(Charset.defaultCharset())}"}
+
     val response = Sync.awaitResult<Message<Buffer>> {
       vertx.eventBus().send(serviceAddress, outBuffer.buffer, it)
     }
+
+    logger.fine { "Response received from $serviceAddress" }
+    logger.finer { "Response contents: ${response.body().toString(Charset.defaultCharset())}" }
 
     if (response.body() != null && response.body().length() > 0) {
       val inBuffer = BufferInputStream(response.body())

@@ -30,10 +30,10 @@ object Main {
   @JvmStatic
   fun main(vararg args: String) {
     // Configure the JUL to Log4J bridge
-    System.setProperty("java.util.logging.manager",
-      "org.apache.logging.log4j.jul.LogManager")
+//    System.setProperty("java.util.logging.manager",
+//      "org.apache.logging.log4j.jul.LogManager")
 
-    JavaAgentsLoader.attachRequiredJavaAgents()
+//    JavaAgentsLoader.attachRequiredJavaAgents()
 
     val config = ConfigFactory.load()
     val clusterManager = IgniteClusterManagerProvider.create()

@@ -16,7 +16,6 @@ dependencies {
   compile "org.jetbrains.kotlin:kotlin-stdlib:${versions.kotlin}"
 
   compile project(':duna-annotations')
-  compile project(':duna-agent')
 
   compile "io.vertx:vertx-core:${versions.vertx}"
   compile "io.vertx:vertx-sync:${versions.vertx}"
