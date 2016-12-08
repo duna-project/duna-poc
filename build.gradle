@@ -1,11 +1,15 @@
+/*
+ * Copyright (c) 2016 Duna Project
+ * Ministério do Planejamento, Desenvolvimento de Gestão
+ * República Federativa do Brasil
+ *
+ * This file is part of the Duna Project.
+ */
 buildscript {
   ext.versions = [
       kotlin: '1.1-M03'
   ]
 }
-
-group 'io.duna'
-version '0.1-SNAPSHOT'
 
 ext {
   versions = [
@@ -16,7 +20,7 @@ ext {
     guice: '4.1.0',
     ignite: '1.7.0',
     junit: '5.0.0-M2',
-    kotlin: '1.1-M03',
+    kotlin: '1.0.5-2',
     log4j: '2.7',
     messagePack: '0.8.11',
     mockito: '2.2.28',
@@ -30,14 +34,17 @@ configure (allprojects) {
   apply plugin: 'idea'
   apply plugin: 'eclipse'
 
+  group 'io.duna'
+  version '0.1'
+
   repositories {
     jcenter()
-    maven { url "https://dl.bintray.com/kotlin/kotlin-eap-1.1" }
   }
 }
 
 configure (subprojects) {
   apply plugin: 'java'
+  apply from: file("$rootDir/gradle/publishing.gradle")
 
   sourceCompatibility = 1.8
   targetCompatibility = 1.8

@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright (c) 2016 Duna Project
+  ~ Ministério do Planejamento, Desenvolvimento de Gestão
+  ~ República Federativa do Brasil
+  ~
+  ~ This file is part of the Duna Project.
+  -->
 <Configuration status="OFF">
   <Appenders>
     <Console name="Console" target="SYSTEM_OUT">

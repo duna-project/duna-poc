@@ -5,8 +5,3 @@
  *
  * This file is part of the Duna Project.
  */
-package com.google.inject
-
-import java.lang.reflect.Type
-
-internal class UnsafeTypeLiteral(type: Type) : TypeLiteral<Any>(type)

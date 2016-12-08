@@ -1,17 +1,15 @@
-buildscript {
-  repositories {
-    jcenter()
-    maven { url "https://dl.bintray.com/kotlin/kotlin-eap-1.1" }
-  }
-
-  dependencies {
-    classpath "org.jetbrains.dokka:dokka-gradle-plugin:0.9.9"
-    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${versions.kotlin}"
-  }
+/*
+ * Copyright (c) 2016 Duna Project
+ * Ministério do Planejamento, Desenvolvimento de Gestão
+ * República Federativa do Brasil
+ *
+ * This file is part of the Duna Project.
+ */
+plugins {
+  id "nebula.kotlin" version "1.0.5-2"
 }
 
 apply plugin: 'kotlin'
-apply plugin: 'org.jetbrains.dokka'
 
 sourceSets {
   echo
@@ -19,7 +17,7 @@ sourceSets {
 }
 
 dependencies {
-  compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:${versions.kotlin}"
+  compile "org.jetbrains.kotlin:kotlin-stdlib:${versions.kotlin}"
   compile project(':duna-core')
 
   callerCompile sourceSets.main.runtimeClasspath
