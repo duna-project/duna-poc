@@ -11,30 +11,17 @@ import io.duna.gradle.tasks.RunApplication
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPlugin
-import org.gradle.api.tasks.JavaExec
 
 class Duna implements Plugin<Project> {
 
-  private static final String VERSION = "0.1-SNAPSHOT"
+  public static final String VERSION = "0.1-SNAPSHOT"
 
   @Override
   void apply(Project project) {
     project.extensions.create("duna", DunaOptionsExtension)
-    project.tasks.create(
-      name: "generateServiceActionHandlers",
-      type: GenerateServiceActionHandlers,
-      group: "code generation",
-      description: "Generate the service action handlers"
-    )
 
     if (!project.plugins.hasPlugin(JavaPlugin)) {
       project.apply plugin: JavaPlugin
-    }
-
-    if (project.plugins.hasPlugin("kotlin")) {
-      project.tasks.getByName("compileKotlin").dependsOn("generateServiceActionHandlers")
-    } else {
-      project.tasks.getByName("compileJava").dependsOn("generateServiceActionHandlers")
     }
 
     project.classes {

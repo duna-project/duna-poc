@@ -26,17 +26,17 @@ dependencies {
 
   testCompile "org.spockframework:spock-core:${versions.spock}"
 }
-
-classes {
-  doFirst {
-    ant.taskdef(name: 'scanSuspendables',
-      classname: 'co.paralleluniverse.fibers.instrument.SuspendablesScanner',
-      classpath: "build/classes/main:build/resources/main:${configurations.runtime.asPath}")
-    ant.scanSuspendables(auto: false,
-      suspendablesFile: "$sourceSets.main.output.resourcesDir/META-INF/suspendables",
-      supersFile: "$sourceSets.main.output.resourcesDir/META-INF/suspendable-supers",
-      append: true) {
-      fileset(dir: sourceSets.main.output.classesDir)
-    }
-  }
-}
+//
+//classes {
+//  doFirst {
+//    ant.taskdef(name: 'scanSuspendables',
+//      classname: 'co.paralleluniverse.fibers.instrument.SuspendablesScanner',
+//      classpath: "build/classes/main:build/resources/main:${configurations.runtime.asPath}")
+//    ant.scanSuspendables(auto: false,
+//      suspendablesFile: "$sourceSets.main.output.resourcesDir/META-INF/suspendables",
+//      supersFile: "$sourceSets.main.output.resourcesDir/META-INF/suspendable-supers",
+//      append: true) {
+//      fileset(dir: sourceSets.main.output.classesDir)
+//    }
+//  }
+//}
