@@ -13,7 +13,6 @@ import com.google.inject.Guice
 import com.google.inject.Injector
 import com.typesafe.config.ConfigFactory
 import io.duna.core.bootstrap.IgniteClusterManagerProvider
-import io.duna.core.bootstrap.JavaAgentsLoader
 import io.duna.core.classpath.ClasspathScanner
 import io.duna.core.inject.LocalServiceBinderModule
 import io.duna.core.inject.RemoteServiceBinderModule

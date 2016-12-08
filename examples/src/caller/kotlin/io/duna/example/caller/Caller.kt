@@ -14,7 +14,6 @@ import com.google.inject.AbstractModule
 import com.google.inject.Guice
 import com.google.inject.Injector
 import io.duna.core.bootstrap.IgniteClusterManagerProvider
-import io.duna.core.bootstrap.JavaAgentsLoader
 import io.duna.core.proxy.RemoteServiceProxyFactory
 import io.duna.core.service.ServiceVerticleFactory
 import io.duna.example.echo.EchoService
@@ -29,8 +28,6 @@ object Caller {
   fun main(vararg args: String) {
     System.setProperty("java.util.logging.manager",
       "org.apache.logging.log4j.jul.LogManager")
-
-    JavaAgentsLoader.attachRequiredJavaAgents()
 
     val clusterManager = IgniteClusterManagerProvider.create()
 
