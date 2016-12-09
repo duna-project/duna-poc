@@ -8,6 +8,7 @@
 package io.duna.core.service
 
 import co.paralleluniverse.fibers.Suspendable
+import com.esotericsoftware.reflectasm.MethodAccess
 import com.google.inject.Injector
 import io.duna.core.service.handlers.GenericActionHandler
 import io.duna.core.util.Services

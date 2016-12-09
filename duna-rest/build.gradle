@@ -14,10 +14,10 @@ apply plugin: 'groovy'
 
 dependencies {
   compile "org.jetbrains.kotlin:kotlin-stdlib:${versions.kotlin}"
-
   compile project(':duna-core')
 
   compile "io.vertx:vertx-web:${versions.vertx}"
+  compile "com.esotericsoftware:reflectasm:1.11.3"
 
   compile "org.msgpack:msgpack-core:${versions.messagePack}"
   compile "org.msgpack:jackson-dataformat-msgpack:${versions.messagePack}"
@@ -26,17 +26,17 @@ dependencies {
 
   testCompile "org.spockframework:spock-core:${versions.spock}"
 }
-//
-//classes {
-//  doFirst {
-//    ant.taskdef(name: 'scanSuspendables',
-//      classname: 'co.paralleluniverse.fibers.instrument.SuspendablesScanner',
-//      classpath: "build/classes/main:build/resources/main:${configurations.runtime.asPath}")
-//    ant.scanSuspendables(auto: false,
-//      suspendablesFile: "$sourceSets.main.output.resourcesDir/META-INF/suspendables",
-//      supersFile: "$sourceSets.main.output.resourcesDir/META-INF/suspendable-supers",
-//      append: true) {
-//      fileset(dir: sourceSets.main.output.classesDir)
-//    }
-//  }
-//}
+
+classes {
+  doFirst {
+    ant.taskdef(name: 'scanSuspendables',
+      classname: 'co.paralleluniverse.fibers.instrument.SuspendablesScanner',
+      classpath: "build/classes/main:build/resources/main:${configurations.runtime.asPath}")
+    ant.scanSuspendables(auto: false,
+      suspendablesFile: "$sourceSets.main.output.resourcesDir/META-INF/suspendables",
+      supersFile: "$sourceSets.main.output.resourcesDir/META-INF/suspendable-supers",
+      append: true) {
+      fileset(dir: sourceSets.main.output.classesDir)
+    }
+  }
+}
