@@ -12,11 +12,12 @@ import com.google.inject.AbstractModule
 import com.google.inject.Guice
 import com.google.inject.Injector
 import com.typesafe.config.ConfigFactory
-import io.duna.core.bootstrap.IgniteClusterManagerProvider
+import io.duna.core.bootstrap.IgniteClusterManagerFactory
 import io.duna.core.classpath.ClasspathScanner
 import io.duna.core.inject.LocalServiceBinderModule
 import io.duna.core.inject.RemoteServiceBinderModule
 import io.duna.core.service.ServiceVerticleFactory
+import io.duna.core.vertx.BridgeVerticleFactory
 import io.vertx.core.Future
 import io.vertx.core.Vertx
 import io.vertx.core.VertxOptions
@@ -35,7 +36,7 @@ object Main {
 //    JavaAgentsLoader.attachRequiredJavaAgents()
 
     val config = ConfigFactory.load()
-    val clusterManager = IgniteClusterManagerProvider.create()
+    val clusterManager = IgniteClusterManagerFactory.create()
 
     val vertxOptions = VertxOptions()
       .setClusterManager(clusterManager)
@@ -58,7 +59,9 @@ object Main {
           override fun configure() {
             bind(Vertx::class.java).toInstance(Vertx.currentContext().owner())
             bind(ObjectMapper::class.java).toInstance(Json.mapper)
+
             bind(ServiceVerticleFactory::class.java).asEagerSingleton()
+            bind(BridgeVerticleFactory::class.java).asEagerSingleton()
 
             install(RemoteServiceBinderModule)
             install(LocalServiceBinderModule)
@@ -72,9 +75,17 @@ object Main {
         res.result().registerVerticleFactory(it.result()
           .getProvider(ServiceVerticleFactory::class.java).get())
 
+        res.result().registerVerticleFactory(it.result()
+          .getProvider(BridgeVerticleFactory::class.java).get())
+
         ClasspathScanner.getLocalServices().forEach { verticle ->
           rootLogger.info { "Deploying verticle duna:$verticle" }
           res.result().deployVerticle("duna:$verticle")
+        }
+
+        ClasspathScanner.getBridgeVerticles().forEach { verticle ->
+          rootLogger.info { "Deploying bridge duna:$verticle" }
+          res.result().deployVerticle("duna-bridge:$verticle")
         }
       })
     }

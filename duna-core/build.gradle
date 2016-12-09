@@ -25,7 +25,6 @@ dependencies {
 
   compile "co.paralleluniverse:quasar-core:${versions.quasar}:jdk8"
 
-  compile "com.esotericsoftware:reflectasm:1.11.3"
   compile "com.google.inject:guice:${versions.guice}"
   compile "com.google.inject.extensions:guice-multibindings:${versions.guice}"
 

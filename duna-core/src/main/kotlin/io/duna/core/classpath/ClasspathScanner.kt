@@ -9,16 +9,22 @@ package io.duna.core.classpath
 
 import io.duna.core.service.Contract
 import io.duna.core.service.Service
+import io.duna.core.vertx.BridgeVerticle
 import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner
 import io.github.lukehutch.fastclasspathscanner.scanner.ScanResult
+import io.vertx.core.Verticle
 
 /**
  * Scans the classpath for contracts and services.
  */
-internal object ClasspathScanner {
+object ClasspathScanner {
 
   private var scanResult: ScanResult = FastClasspathScanner()
       .scan(Runtime.getRuntime().availableProcessors())
+
+  fun getBridgeVerticles(): Set<String> = scanResult
+    .getNamesOfClassesWithAnnotation(BridgeVerticle::class.java)
+    .intersect(scanResult.getNamesOfClassesImplementing(Verticle::class.java))
 
   fun getAllServices(): List<String> = scanResult
       .getNamesOfClassesWithAnnotation(Contract::class.java)

@@ -9,8 +9,11 @@ package io.duna.core.inject
 
 import com.google.inject.AbstractModule
 import com.google.inject.Scopes
+import com.google.inject.TypeLiteral
 import com.google.inject.UnsafeTypeLiteral
+import com.google.inject.multibindings.Multibinder
 import io.duna.core.classpath.ClasspathScanner
+import io.duna.core.service.LocalServices
 import io.duna.core.util.Services
 import java.lang.reflect.Modifier
 import java.util.logging.LogManager

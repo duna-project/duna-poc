@@ -13,7 +13,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.inject.AbstractModule
 import com.google.inject.Guice
 import com.google.inject.Injector
-import io.duna.core.bootstrap.IgniteClusterManagerProvider
+import io.duna.core.bootstrap.IgniteClusterManagerFactory
 import io.duna.core.proxy.RemoteServiceProxyFactory
 import io.duna.core.service.ServiceVerticleFactory
 import io.duna.example.echo.EchoService
@@ -29,7 +29,7 @@ object Caller {
     System.setProperty("java.util.logging.manager",
       "org.apache.logging.log4j.jul.LogManager")
 
-    val clusterManager = IgniteClusterManagerProvider.create()
+    val clusterManager = IgniteClusterManagerFactory.create()
 
     val vertxOptions = VertxOptions()
       .setClusterManager(clusterManager)

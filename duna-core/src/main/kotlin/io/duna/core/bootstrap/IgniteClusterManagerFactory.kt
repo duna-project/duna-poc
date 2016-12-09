@@ -16,7 +16,7 @@ import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi
 import org.apache.ignite.spi.discovery.tcp.ipfinder.multicast.TcpDiscoveryMulticastIpFinder
 import org.apache.logging.log4j.Level
 
-object IgniteClusterManagerProvider {
+object IgniteClusterManagerFactory {
 
   fun create(): IgniteClusterManager {
     val config = ConfigFactory.load()

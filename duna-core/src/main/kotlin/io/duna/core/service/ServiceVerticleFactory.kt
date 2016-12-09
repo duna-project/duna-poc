@@ -37,7 +37,7 @@ class ServiceVerticleFactory : VerticleFactory {
         injector.getBinding(Key.get(contractClass, qualifierClass as Class<Annotation>)).provider.get()
       } else {
         // Error
-        throw IllegalStateException()
+        throw IllegalStateException("The qualifier provided isn't an annotation.")
       }
     } else {
       injector.getBinding(contractClass).provider.get()
@@ -48,6 +48,10 @@ class ServiceVerticleFactory : VerticleFactory {
 
     return verticleInstance
   }
+
+  override fun blockingCreate(): Boolean = true
+
+  override fun order(): Int = 2
 
   override fun prefix() = "duna"
 }

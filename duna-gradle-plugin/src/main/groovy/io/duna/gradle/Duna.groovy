@@ -15,7 +15,7 @@ import org.gradle.api.tasks.JavaExec
 
 class Duna implements Plugin<Project> {
 
-  public static final String VERSION = "0.1-SNAPSHOT"
+  public static final String VERSION = "0.1.0"
 
   @Override
   void apply(Project project) {
@@ -26,7 +26,20 @@ class Duna implements Plugin<Project> {
     }
 
     createRunTask(project)
-    createScanSuspendablesTask(project)
+
+    project.classes {
+      doFirst {
+        ant.taskdef(name: 'scanSuspendables',
+          classname: 'co.paralleluniverse.fibers.instrument.SuspendablesScanner',
+          classpath: "build/classes/main:build/resources/main:${project.configurations.runtime.asPath}")
+        ant.scanSuspendables(auto: false,
+          suspendablesFile: "${project.sourceSets.main.output.resourcesDir}/META-INF/suspendables",
+          supersFile: "${project.sourceSets.main.output.resourcesDir}/META-INF/suspendable-supers",
+          append: true) {
+          fileset(dir: project.sourceSets.main.output.classesDir)
+        }
+      }
+    }
   }
 
   private void createRunTask(Project project) {
@@ -64,18 +77,6 @@ class Duna implements Plugin<Project> {
   }
 
   private void createScanSuspendablesTask(Project project) {
-    project.classes {
-      doFirst {
-        ant.taskdef(name: 'scanSuspendables',
-          classname: 'co.paralleluniverse.fibers.instrument.SuspendablesScanner',
-          classpath: "build/classes/main:build/resources/main:${project.configurations.runtime.asPath}")
-        ant.scanSuspendables(auto: false,
-          suspendablesFile: "${project.sourceSets.main.output.resourcesDir}/META-INF/suspendables",
-          supersFile: "${project.sourceSets.main.output.resourcesDir}/META-INF/suspendable-supers",
-          append: true) {
-          fileset(dir: project.sourceSets.main.output.classesDir)
-        }
-      }
-    }
+
   }
 }

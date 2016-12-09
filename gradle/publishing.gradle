@@ -5,7 +5,28 @@
  *
  * This file is part of the Duna Project.
  */
-apply plugin: 'maven-publish'
+def bintrayRepo = project.version.endsWith("-SNAPSHOT") ?
+  'duna-snapshots' : 'duna'
+
+bintray {
+  user = bintrayUser
+  key = bintrayApiKey
+
+  pkg {
+    repo = bintrayRepo
+    name = project.name
+    userOrg = 'duna-project'
+    licenses = ['Apache-2.0']
+    vcsUrl = 'https://github.com/cemelo/duna.git'
+
+    version {
+      name = project.version
+      released  = new Date()
+    }
+
+    publications = ['Duna']
+  }
+}
 
 task sourcesJar(type: Jar, dependsOn: classes) {
   classifier = 'sources'
@@ -17,34 +38,13 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
   from javadoc.destinationDir
 }
 
-
-
 publishing {
   publications {
-    duna(MavenPublication) {
+    Duna(MavenPublication) {
       from components.java
-
-      artifact sourcesJar
-      artifact javadocJar
 
       pom.withXml {
         asNode().appendNode('url', 'http://duna.io')
-      }
-    }
-  }
-
-  repositories {
-    maven {
-      name 'Internal'
-
-      if (project.version.endsWith("-SNAPSHOT"))
-        url "http://drep01.sof.intra:8080/nexus/content/repositories/snapshots"
-      else
-        url "http://drep01.sof.intra:8080/nexus/content/repositories/releases"
-
-      credentials {
-        username "$mavenUser"
-        password "$mavenPassword"
       }
     }
   }
