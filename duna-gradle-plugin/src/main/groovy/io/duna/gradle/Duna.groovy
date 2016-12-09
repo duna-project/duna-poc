@@ -7,10 +7,11 @@
  */
 package io.duna.gradle
 
-import io.duna.gradle.tasks.RunApplication
+
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPlugin
+import org.gradle.api.tasks.JavaExec
 
 class Duna implements Plugin<Project> {
 
@@ -24,6 +25,45 @@ class Duna implements Plugin<Project> {
       project.apply plugin: JavaPlugin
     }
 
+    createRunTask(project)
+    createScanSuspendablesTask(project)
+  }
+
+  private void createRunTask(Project project) {
+    project.afterEvaluate {
+      project.configurations {
+        agent
+      }
+
+      if (project.ext.hasProperty("versions") &&
+        project.ext.versions.contains("duna")) {
+        project.dependencies {
+          agent "io.duna:duna-agent:${project.ext.versions.duna}"
+        }
+      } else {
+        project.dependencies {
+          agent "io.duna:duna-agent:${VERSION}"
+        }
+      }
+
+      project.tasks.create(
+        name: 'run',
+        type: JavaExec,
+        group: 'application',
+        description: 'Run the microservice application',
+        dependsOn: project.classes
+      ) {
+        classpath = project.sourceSets.main.runtimeClasspath
+        main = 'io.duna.core.Main'
+
+        jvmArgs "-javaagent:${project.configurations.agent.find {it.name.contains("duna-agent")}}",
+          "-javaagent:${project.configurations.compile.find {it.name.contains("quasar-core")}}",
+          "-Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager"
+      }
+    }
+  }
+
+  private void createScanSuspendablesTask(Project project) {
     project.classes {
       doFirst {
         ant.taskdef(name: 'scanSuspendables',
@@ -37,7 +77,5 @@ class Duna implements Plugin<Project> {
         }
       }
     }
-
-    RunApplication.createRunTask(project)
   }
 }
