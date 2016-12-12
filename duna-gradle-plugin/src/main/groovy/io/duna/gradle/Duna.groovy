@@ -15,7 +15,7 @@ import org.gradle.api.tasks.JavaExec
 
 class Duna implements Plugin<Project> {
 
-  public static final String VERSION = "0.1.0"
+  public static final String VERSION = "0.1.0-SNAPSHOT"
 
   @Override
   void apply(Project project) {

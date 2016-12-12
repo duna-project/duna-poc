@@ -1,26 +1,37 @@
 package io.duna.web;
 
+import io.duna.core.service.Contract;
 import io.duna.core.service.LocalServices;
 import io.duna.core.vertx.BridgeVerticle;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 
 import javax.inject.Inject;
-import java.util.Set;
+import java.util.*;
 
 @BridgeVerticle
 public class HttpRouterVerticle extends AbstractVerticle {
 
-    private final Set<Class<?>> localContracts;
+    private final Map<Class<?>, Object> localServices;
 
     @Inject
-    public HttpRouterVerticle(@LocalServices Set<Class<?>> localContracts) {
-        this.localContracts = localContracts;
+    public HttpRouterVerticle(@LocalServices Map<Class<?>, Object> localServices) {
+        this.localServices = localServices;
     }
 
     @Override
     public void start(Future<Void> startFuture) throws Exception {
-        localContracts.forEach(System.out::println);
+        Set<Class<?>> contracts = new HashSet<>();
+
+//        localServices
+//            .parallelStream()
+//            .flatMap(s -> Arrays.stream(s.getClass().getInterfaces()))
+//            .filter(c -> c.isAnnotationPresent(Contract.class))
+//            .forEach(System.out::println);
+
+        System.out.println(localServices);
+//        Arrays.asList(this.getClass().getInterfaces());
+
         startFuture.complete();
     }
 }

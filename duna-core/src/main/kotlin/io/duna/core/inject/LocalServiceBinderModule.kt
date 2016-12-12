@@ -11,6 +11,7 @@ import com.google.inject.AbstractModule
 import com.google.inject.Scopes
 import com.google.inject.TypeLiteral
 import com.google.inject.UnsafeTypeLiteral
+import com.google.inject.multibindings.MapBinder
 import com.google.inject.multibindings.Multibinder
 import io.duna.core.classpath.ClasspathScanner
 import io.duna.core.service.LocalServices
@@ -29,6 +30,12 @@ internal object LocalServiceBinderModule : AbstractModule() {
 
     val localContracts = ClasspathScanner.getLocalServices()
         .map { Class.forName(it) }
+
+    val localServices = MapBinder
+      .newMapBinder(binder(),
+        object : TypeLiteral<Class<*>>() {},
+        object : TypeLiteral<Any>() {},
+        LocalServices::class.java)
 
     localContracts.forEach contractForEach@ { contractClass ->
       if (!contractClass.isInterface && !Modifier.isAbstract(contractClass.modifiers)) {
@@ -61,6 +68,11 @@ internal object LocalServiceBinderModule : AbstractModule() {
                   .to(serviceClass)
                   .`in`(Scopes.SINGLETON)
             }
+
+            localServices
+              .addBinding(contractClass)
+              .to(serviceClass)
+              .`in`(Scopes.SINGLETON)
 
             logger.info { "Bound ${contractClass.canonicalName} -> ${serviceClass.canonicalName}" }
           }
