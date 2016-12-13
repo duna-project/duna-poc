@@ -13,12 +13,17 @@ import com.google.inject.TypeLiteral
 import com.google.inject.UnsafeTypeLiteral
 import com.google.inject.multibindings.MapBinder
 import com.google.inject.multibindings.Multibinder
-import io.duna.core.classpath.ClasspathScanner
+import io.duna.core.classpath.ClassPathScanner
 import io.duna.core.service.LocalServices
 import io.duna.core.util.Services
 import java.lang.reflect.Modifier
 import java.util.logging.LogManager
 
+/**
+ * Binds contracts to their implementations found in the classpath.
+ *
+ * @author [Carlos Eduardo Melo][cemelo@redime.com.br]
+ */
 internal object LocalServiceBinderModule : AbstractModule() {
 
   @JvmStatic
@@ -26,15 +31,15 @@ internal object LocalServiceBinderModule : AbstractModule() {
     .getLogger(LocalServiceBinderModule::class.java.name)
 
   override fun configure() {
-    logger.info { "Binding local services" }
+    logger.info { "Configuring local services" }
+    logger.fine { "Binding local service contracts" }
 
-    val localContracts = ClasspathScanner.getLocalServices()
+    val localContracts = ClassPathScanner.getLocalServices()
         .map { Class.forName(it) }
 
-    val localServices = MapBinder
-      .newMapBinder(binder(),
-        object : TypeLiteral<Class<*>>() {},
-        object : TypeLiteral<Any>() {},
+    val localServices = Multibinder
+      .newSetBinder(binder(),
+        object : TypeLiteral<String>() {},
         LocalServices::class.java)
 
     localContracts.forEach contractForEach@ { contractClass ->
@@ -46,13 +51,13 @@ internal object LocalServiceBinderModule : AbstractModule() {
 
       val contractTypeLiteral = UnsafeTypeLiteral(contractClass)
 
-      ClasspathScanner
+      ClassPathScanner
           .getImplementationsInClasspath(contractClass)
           .map { Class.forName(it) }
           .forEach serviceForEach@ { serviceClass ->
             if (serviceClass.isInterface || Modifier.isAbstract(serviceClass.modifiers)) {
               logger.warning { "Unable to bind ${serviceClass.canonicalName}. " +
-                "Implementations must be instantiable." }
+                "Implementations must be concrete classes." }
               return@serviceForEach
             }
 
@@ -63,21 +68,19 @@ internal object LocalServiceBinderModule : AbstractModule() {
                   .annotatedWith(qualifier)
                   .to(serviceClass)
                   .`in`(Scopes.SINGLETON)
+
+              localServices.addBinding()
+                .toInstance("duna:${contractClass.name}@${qualifier.javaClass.name}")
             } else {
               bind(contractTypeLiteral)
                   .to(serviceClass)
                   .`in`(Scopes.SINGLETON)
+
+              localServices.addBinding().toInstance("duna:${contractClass.name}")
             }
 
-            localServices
-              .addBinding(contractClass)
-              .to(serviceClass)
-              .`in`(Scopes.SINGLETON)
-
-            logger.info { "Bound ${contractClass.canonicalName} -> ${serviceClass.canonicalName}" }
+            logger.fine { "Bound ${contractClass.canonicalName} -> ${serviceClass.canonicalName}" }
           }
     }
-
-    logger.info { "Local services bound" }
   }
 }

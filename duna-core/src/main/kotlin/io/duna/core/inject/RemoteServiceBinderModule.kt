@@ -9,11 +9,16 @@ package io.duna.core.inject
 
 import com.google.inject.AbstractModule
 import com.google.inject.UnsafeTypeLiteral
-import io.duna.core.classpath.ClasspathScanner
+import io.duna.core.classpath.ClassPathScanner
 import io.duna.core.proxy.RemoteServiceProxyFactory
 import java.lang.reflect.Modifier
 import java.util.logging.LogManager
 
+/**
+ * Binds remote service contracts to proxies created at runtime.
+ *
+ * @author [Carlos Eduardo Melo][cemelo@redime.com.br]
+ */
 internal object RemoteServiceBinderModule : AbstractModule() {
 
   @JvmStatic
@@ -28,7 +33,7 @@ internal object RemoteServiceBinderModule : AbstractModule() {
   override fun configure() {
     logger.info { "Binding proxies for remote services" }
 
-    val remoteContracts = ClasspathScanner.getRemoteServices()
+    val remoteContracts = ClassPathScanner.getRemoteServices()
         .map { Class.forName(it) }
 
     remoteContracts.forEach contractForEach@ { contractClass ->

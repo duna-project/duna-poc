@@ -7,9 +7,13 @@
  */
 package io.duna.example.echo
 
+import io.duna.core.service.Address
 import io.duna.core.service.Contract
 
 @Contract
+@Address("echoService")
 interface EchoService {
+
+  @Address("echo")
   fun echo(shout: String): String
 }

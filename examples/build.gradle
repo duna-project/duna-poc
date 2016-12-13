@@ -25,6 +25,7 @@ dependencies {
   callerCompile "co.paralleluniverse:quasar-kotlin:0.7.7"
 
   echoCompile sourceSets.main.runtimeClasspath
+  echoCompile project(':duna-rest')
 
   testCompile "org.junit.jupiter:junit-jupiter-api:${versions.junit}"
   testCompile "org.junit.jupiter:junit-jupiter-engine:${versions.junit}"

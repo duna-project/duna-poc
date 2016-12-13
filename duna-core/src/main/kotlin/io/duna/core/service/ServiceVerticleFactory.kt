@@ -15,16 +15,15 @@ import io.vertx.core.spi.VerticleFactory
 import java.util.logging.Logger
 import javax.inject.Inject
 
-class ServiceVerticleFactory : VerticleFactory {
-
-  @Inject
-  lateinit var injector: Injector
-
-  @Inject
-  lateinit var logger: Logger
+class ServiceVerticleFactory
+  @Inject constructor(private val injector: Injector,
+                      private val verticleFactory: ServiceVerticle.Factory,
+                      private val logger: Logger)
+  : VerticleFactory {
 
   override fun createVerticle(verticleName: String, classLoader: ClassLoader): Verticle {
-    val contractClass = classLoader.loadClass(VerticleFactory.removePrefix(verticleName).substringBefore("@"))
+    val contractClass = classLoader.loadClass(VerticleFactory.removePrefix(verticleName)
+      .substringBefore("@"))
     val qualifierName = VerticleFactory.removePrefix(verticleName).substringAfter("@", "")
 
     logger.fine { "Creating verticle for service $verticleName" }
@@ -43,8 +42,7 @@ class ServiceVerticleFactory : VerticleFactory {
       injector.getBinding(contractClass).provider.get()
     }
 
-    val verticleInstance = ServiceVerticle(contractClass, implementation)
-    injector.injectMembers(verticleInstance)
+    val verticleInstance = verticleFactory.create(contractClass, implementation)
 
     return verticleInstance
   }

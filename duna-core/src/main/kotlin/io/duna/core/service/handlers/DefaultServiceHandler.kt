@@ -7,8 +7,10 @@
  */
 package io.duna.core.service.handlers
 
+import co.paralleluniverse.fibers.SuspendExecution
 import co.paralleluniverse.fibers.Suspendable
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.google.inject.assistedinject.Assisted
 import io.duna.core.implementation.invocation.DestructuringMethodCall
 import io.duna.core.service.ServiceCallDelegation
 import io.duna.core.io.BufferInputStream
@@ -25,16 +27,13 @@ import java.util.logging.Logger
 import javax.inject.Inject
 
 /**
- * Handles a request goTo a service and replies the result.
+ * Handles a request to a service and replies the result.
  */
-internal class GenericActionHandler<T>(private val service: T,
-                                       private val method: Method) : Handler<Message<Buffer>> {
-
-  @Inject
-  lateinit var objectMapper: ObjectMapper
-
-  @Inject
-  lateinit var logger: Logger
+internal class DefaultServiceHandler<T>
+  @Inject constructor(@Assisted private val service: T,
+                      @Assisted private val method: Method,
+                      private val objectMapper: ObjectMapper,
+                      private val logger: Logger) : Handler<Message<Buffer>> {
 
   val serviceCallDelegation: ServiceCallDelegation<T>
 
@@ -95,5 +94,9 @@ internal class GenericActionHandler<T>(private val service: T,
       logger.finer { "Reply to ${event.replyAddress()}: null" }
       event.reply(null)
     }
+  }
+
+  interface Factory {
+    fun create(service: Any, method: Method): DefaultServiceHandler<Any>
   }
 }

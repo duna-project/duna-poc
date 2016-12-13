@@ -8,29 +8,27 @@
 package io.duna.core.service
 
 import co.paralleluniverse.fibers.Suspendable
-import com.esotericsoftware.reflectasm.MethodAccess
-import com.google.inject.Injector
-import io.duna.core.service.handlers.GenericActionHandler
+import com.google.inject.assistedinject.Assisted
+import io.duna.core.service.handlers.DefaultServiceHandler
 import io.duna.core.util.Services
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.eventbus.EventBus
 import io.vertx.ext.sync.Sync.fiberHandler
 import io.vertx.ext.sync.SyncVerticle
+import net.bytebuddy.description.type.TypeDescription
 import java.util.logging.Logger
 import javax.inject.Inject
 
 /**
  * Service façade responsible for receiving [EventBus] events and
- * dispatching them goTo the corresponding service.
+ * dispatching them to the corresponding service.
  */
-class ServiceVerticle(private val contractClass: Class<*>,
-                      private val service: Any) : SyncVerticle() {
-
-  @Inject
-  lateinit var logger: Logger
-
-  @Inject
-  lateinit var injector: Injector
+class ServiceVerticle
+  @Inject internal constructor(@Assisted private val contractClass: Class<*>,
+                               @Assisted private val service: Any,
+                               private val logger: Logger,
+                               private val handlerFactory: DefaultServiceHandler.Factory)
+  : SyncVerticle() {
 
   @Suspendable
   override fun start() {
@@ -39,17 +37,18 @@ class ServiceVerticle(private val contractClass: Class<*>,
     logger.info { "Registering verticle for service $contractClass" }
 
     contractClass.methods.forEach { method ->
-      val serviceAddress = if (qualifierPrefix != null)
-        "$qualifierPrefix@${Services.getServiceAddress(method)}"
-      else
-        Services.getServiceAddress(method)
+      val serviceAddress =
+        if (qualifierPrefix != null) "$qualifierPrefix@${Services.getServiceAddress(method)}"
+        else Services.getServiceAddress(method)
 
       logger.fine { "Registering consumer at address $serviceAddress" }
 
-      val handler = GenericActionHandler(service, method)
-      injector.injectMembers(handler)
-
+      val handler = handlerFactory.create(service, method)
       vertx.eventBus().consumer<Buffer>(serviceAddress, fiberHandler(handler))
     }
+  }
+
+  interface Factory {
+    fun create(contractClass: Class<*>, service: Any): ServiceVerticle
   }
 }

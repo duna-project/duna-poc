@@ -27,6 +27,7 @@ dependencies {
 
   compile "com.google.inject:guice:${versions.guice}"
   compile "com.google.inject.extensions:guice-multibindings:${versions.guice}"
+  compile "com.google.inject.extensions:guice-assistedinject:${versions.guice}"
 
   compile "net.bytebuddy:byte-buddy:${versions.byteBuddy}"
   compile "net.bytebuddy:byte-buddy-agent:${versions.byteBuddy}"
@@ -40,7 +41,7 @@ dependencies {
 
   compile "io.github.lukehutch:fast-classpath-scanner:${versions.fastClasspathScanner}"
 
-  compile "com.ea.agentloader:ea-agent-loader:1.0.2"
+  compile "com.esotericsoftware:reflectasm:1.11.3"
 
   compile "com.typesafe:config:${versions.config}"
 

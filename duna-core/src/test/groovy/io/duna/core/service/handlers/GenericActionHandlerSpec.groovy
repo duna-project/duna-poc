@@ -18,7 +18,7 @@ class GenericActionHandlerSpec extends Specification {
   def "Forwarding a method invocation to an implementation"() {
     setup:
       def echo = new Echo()
-      def target = new GenericActionHandler(echo, echo.class.getMethod("shout", String))
+      def target = new DefaultServiceHandler(echo, echo.class.getMethod("shout", String))
 
     when:
       def result = target.serviceCallDelegation.invoke(echo, "Yoleihu!")

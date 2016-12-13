@@ -1,15 +1,14 @@
 package io.duna.web;
 
-import io.duna.core.service.Contract;
 import io.duna.core.service.LocalServices;
-import io.duna.core.vertx.BridgeVerticle;
+import io.duna.core.external.Port;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 
 import javax.inject.Inject;
 import java.util.*;
 
-@BridgeVerticle
+@Port
 public class HttpRouterVerticle extends AbstractVerticle {
 
     private final Map<Class<?>, Object> localServices;
