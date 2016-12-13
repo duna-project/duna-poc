@@ -14,6 +14,7 @@ import com.google.inject.AbstractModule
 import com.google.inject.Guice
 import com.google.inject.Injector
 import io.duna.core.bootstrap.IgniteClusterManagerFactory
+import io.duna.core.inject.component.ExtensionFactoryBinderModule
 import io.duna.core.proxy.RemoteServiceProxyFactory
 import io.duna.core.service.ServiceVerticleFactory
 import io.duna.example.echo.EchoService
@@ -44,11 +45,17 @@ object Caller {
             bind(Vertx::class.java).toInstance(Vertx.currentContext().owner())
             bind(ObjectMapper::class.java).toInstance(Json.mapper)
             bind(ServiceVerticleFactory::class.java).asEagerSingleton()
+
+            install(ExtensionFactoryBinderModule)
           }
         })
 
         future.complete(injector)
       }, { injector ->
+        if (injector.failed()) {
+          injector.cause().printStackTrace()
+        }
+
         it.result().deployVerticle(object : SyncVerticle() {
           @Suspendable
           override fun start() {

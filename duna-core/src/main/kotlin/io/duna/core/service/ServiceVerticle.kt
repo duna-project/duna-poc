@@ -9,8 +9,8 @@ package io.duna.core.service
 
 import co.paralleluniverse.fibers.Suspendable
 import com.google.inject.assistedinject.Assisted
-import io.duna.core.service.handlers.DefaultServiceHandler
-import io.duna.core.util.Services
+import io.duna.core.service.handler.DefaultServiceHandler
+import io.duna.util.Services
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.eventbus.EventBus
 import io.vertx.ext.sync.Sync.fiberHandler
@@ -27,7 +27,7 @@ class ServiceVerticle
   @Inject internal constructor(@Assisted private val contractClass: Class<*>,
                                @Assisted private val service: Any,
                                private val logger: Logger,
-                               private val handlerFactory: DefaultServiceHandler.Factory)
+                               private val handlerFactory: DefaultServiceHandler.BinderFactory)
   : SyncVerticle() {
 
   @Suspendable
@@ -38,8 +38,8 @@ class ServiceVerticle
 
     contractClass.methods.forEach { method ->
       val serviceAddress =
-        if (qualifierPrefix != null) "$qualifierPrefix@${Services.getServiceAddress(method)}"
-        else Services.getServiceAddress(method)
+        if (qualifierPrefix != null) "$qualifierPrefix@${Services.getInternalServiceAddress(method)}"
+        else Services.getInternalServiceAddress(method)
 
       logger.fine { "Registering consumer at address $serviceAddress" }
 
@@ -48,7 +48,7 @@ class ServiceVerticle
     }
   }
 
-  interface Factory {
+  interface BinderFactory {
     fun create(contractClass: Class<*>, service: Any): ServiceVerticle
   }
 }

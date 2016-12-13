@@ -7,7 +7,7 @@
  */
 package io.duna.gradle
 
-
+import io.duna.gradle.tasks.TransformContractClasses
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPlugin
@@ -26,6 +26,7 @@ class Duna implements Plugin<Project> {
     }
 
     createRunTask(project)
+    createTransformTask(project)
 
     project.classes {
       doFirst {
@@ -63,8 +64,8 @@ class Duna implements Plugin<Project> {
         name: 'run',
         type: JavaExec,
         group: 'application',
-        description: 'Run the microservice application',
-        dependsOn: project.classes
+        description: 'Run the service as a standalone application',
+        dependsOn: project.build
       ) {
         classpath = project.sourceSets.main.runtimeClasspath
         main = 'io.duna.core.Main'
@@ -74,6 +75,21 @@ class Duna implements Plugin<Project> {
           "-Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager"
       }
     }
+  }
+
+  private void createTransformTask(Project project) {
+    project.tasks.create(
+      name: 'transformContractClasses',
+      type: TransformContractClasses,
+      group: 'build',
+      dependsOn: project.compileJava
+    ) {
+      sourceFiles = project.sourceSets.main.allSource.files
+      classesDir = project.sourceSets.main.output.classesDir
+      outputDir = project.sourceSets.main.output.classesDir
+    }
+
+    project.tasks.classes.dependsOn(project.tasks.transformContractClasses)
   }
 
   private void createScanSuspendablesTask(Project project) {

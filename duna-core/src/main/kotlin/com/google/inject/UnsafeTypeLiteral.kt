@@ -9,4 +9,7 @@ package com.google.inject
 
 import java.lang.reflect.Type
 
+/**
+ * A type literal from an unchecked type.
+ */
 internal class UnsafeTypeLiteral(type: Type) : TypeLiteral<Any>(type)

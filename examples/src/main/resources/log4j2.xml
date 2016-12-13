@@ -6,10 +6,10 @@
   ~
   ~ This file is part of the Duna Project.
   -->
-<Configuration status="DEBUG">
+<Configuration status="INFO">
     <Appenders>
         <Console name="Console" target="SYSTEM_OUT">
-            <PatternLayout pattern="%d{HH:mm:ss.SSS} %-5level %logger{1.} - %msg%n" />
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} %-5level %-45logger{1.} %msg%n" />
         </Console>
     </Appenders>
     <Loggers>
@@ -19,6 +19,6 @@
         <Logger name="io.duna" level="TRACE"/>
         <Logger name="io.vertx" level="INFO"/>
         <Logger name="org.apache.ignite" level="WARN"/>
-        <Logger name="com.hazelcast" level="INFO"/>
+        <Logger name="vert.x-*" level="INFO"/>
     </Loggers>
 </Configuration>

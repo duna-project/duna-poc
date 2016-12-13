@@ -9,22 +9,21 @@ package io.duna.core.classpath
 
 import io.duna.core.service.Contract
 import io.duna.core.service.Service
-import io.duna.core.external.Port
+import io.duna.port.Port
 import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner
 import io.github.lukehutch.fastclasspathscanner.scanner.ScanResult
 import io.vertx.core.Verticle
 
 /**
- * Scans the classpath for application components.
+ * Scans the classpath for application plugins.
  */
 object ClassPathScanner {
 
   private var scanResult: ScanResult = FastClasspathScanner()
-      .scan(Runtime.getRuntime().availableProcessors())
+    .scan(Runtime.getRuntime().availableProcessors())
 
-  fun getPortExtensions(): Set<String> = scanResult
+  fun getPortExtensions(): List<String> = scanResult
     .getNamesOfClassesWithAnnotation(Port::class.java)
-    .intersect(scanResult.getNamesOfClassesImplementing(Verticle::class.java))
 
   fun getAllServices(): List<String> = scanResult
       .getNamesOfClassesWithAnnotation(Contract::class.java)

@@ -11,12 +11,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import io.duna.core.external.Port;
-import io.duna.core.inject.ComponentFactoryBinderModule;
-import io.duna.core.inject.LocalServiceBinderModule;
-import io.duna.core.inject.RemoteServiceBinderModule;
-import io.duna.core.inject.VerticleFactoryBinderModule;
+import io.duna.core.classpath.ClassPathScanner;
+import io.duna.core.inject.component.ExtensionFactoryBinderModule;
+import io.duna.core.inject.service.LocalServiceBinderModule;
+import io.duna.core.inject.service.RemoteServiceBinderModule;
+import io.duna.core.inject.component.VerticleFactoryBinderModule;
 import io.duna.core.service.LocalServices;
+import io.duna.port.Port;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -24,13 +25,14 @@ import io.vertx.core.json.Json;
 import io.vertx.core.spi.VerticleFactory;
 
 import javax.inject.Inject;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
 /**
  * Created by carlos on 13/12/16.
  */
-@SuppressWarnings({"unused", "MismatchedQueryAndUpdateOfCollection"})
+@SuppressWarnings({"unused", "MismatchedQueryAndUpdateOfCollection", "SpringAutowiredFieldsWarningInspection"})
 public class SupervisorVerticle extends AbstractVerticle {
 
     @Inject
@@ -40,10 +42,10 @@ public class SupervisorVerticle extends AbstractVerticle {
     private Set<VerticleFactory> verticleFactories;
 
     @Inject @LocalServices
-    private Set<String> localServices;
+    private Map<Class<?>, Object> localServices;
 
     @Inject @Port
-    private Set<String> portExtensions;
+    private Set<String> ports;
 
     @Override
     public void start(Future<Void> startFuture) throws Exception {
@@ -58,16 +60,37 @@ public class SupervisorVerticle extends AbstractVerticle {
                 install(RemoteServiceBinderModule.INSTANCE);
                 install(LocalServiceBinderModule.INSTANCE);
 
-                install(ComponentFactoryBinderModule.INSTANCE);
+                install(ExtensionFactoryBinderModule.INSTANCE);
             }
         });
 
         injector.injectMembers(this);
 
         verticleFactories.forEach(vertx::registerVerticleFactory);
-        localServices.forEach(vertx::deployVerticle);
-        portExtensions.forEach(vertx::deployVerticle);
 
-        startFuture.complete();
+        vertx.executeBlocking(f -> {
+            localServices
+                .keySet()
+                .parallelStream()
+                .map(c -> "duna:" + c.getName())
+                .forEach(vertx::deployVerticle);
+
+            System.out.println(ports);
+            System.out.println(ClassPathScanner.INSTANCE.getPortExtensions());
+
+            ports
+                .stream()
+                .map(p -> "Registering port " + p)
+                .forEach(logger::info);
+
+            ports
+                .parallelStream()
+                .map(p -> "duna-port:" + p)
+                .forEach(vertx::deployVerticle);
+
+            f.complete();
+        }, r -> {
+            startFuture.complete();
+        });
     }
 }

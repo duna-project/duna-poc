@@ -17,7 +17,7 @@ import javax.inject.Inject
 
 class ServiceVerticleFactory
   @Inject constructor(private val injector: Injector,
-                      private val verticleFactory: ServiceVerticle.Factory,
+                      private val verticleFactory: ServiceVerticle.BinderFactory,
                       private val logger: Logger)
   : VerticleFactory {
 

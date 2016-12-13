@@ -10,9 +10,9 @@ package io.duna.core.proxy
 import co.paralleluniverse.fibers.SuspendExecution
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.duna.core.DunaException
-import io.duna.core.io.BufferInputStream
-import io.duna.core.io.BufferOutputStream
-import io.duna.core.util.Services
+import io.duna.io.BufferInputStream
+import io.duna.io.BufferOutputStream
+import io.duna.util.Services
 import io.vertx.core.Vertx
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.eventbus.DeliveryOptions
@@ -59,7 +59,7 @@ internal object RemoteServiceCallInterceptor {
     generator.close()
 
     val serviceAddress = addressCache[method] ?:
-      Services.getServiceAddress(method)
+      Services.getInternalServiceAddress(method)
 
     addressCache[method] = serviceAddress
 

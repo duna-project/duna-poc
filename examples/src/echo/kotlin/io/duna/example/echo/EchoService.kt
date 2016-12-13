@@ -9,11 +9,13 @@ package io.duna.example.echo
 
 import io.duna.core.service.Address
 import io.duna.core.service.Contract
+import io.duna.web.annotations.HttpInterface
+import io.duna.web.annotations.HttpMethod
 
 @Contract
-@Address("echoService")
+@HttpInterface
 interface EchoService {
 
-  @Address("echo")
+  @HttpMethod(HttpMethod.Method.GET)
   fun echo(shout: String): String
 }

@@ -10,6 +10,6 @@ include 'duna-agent'
 include 'duna-annotations'
 include 'duna-core'
 include 'duna-gradle-plugin'
+include 'duna-rest-port'
 include 'examples'
-include 'duna-rest'
 
