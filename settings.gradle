@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Duna Project
+ * Copyright (c) 2016 Duna Open Source Project
  * Ministério do Planejamento, Desenvolvimento de Gestão
  * República Federativa do Brasil
  *
@@ -10,6 +10,8 @@ include 'duna-agent'
 include 'duna-annotations'
 include 'duna-core'
 include 'duna-gradle-plugin'
-include 'duna-rest-port'
+include 'duna-http-port'
+include 'duna-metadata-processors'
 include 'examples'
+include 'duna-http-port-api'
 

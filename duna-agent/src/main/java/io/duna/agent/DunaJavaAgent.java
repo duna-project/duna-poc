@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Duna Project
+ * Copyright (c) 2016 Duna Open Source Project
  * Ministério do Planejamento, Desenvolvimento de Gestão
  * República Federativa do Brasil
  *
@@ -61,17 +61,17 @@ public class DunaJavaAgent {
 
         ACTIVE = true;
 
-        DunaJavaAgent.instrumentation = new WeakReference<Instrumentation>(instrumentation);
+        DunaJavaAgent.instrumentation = new WeakReference<>(instrumentation);
     }
 
-    public Instrumentation getInstrumentation() {
+    public static Instrumentation getInstrumentation() {
         if (instrumentation == null)
             throw new UnsupportedOperationException("Agent not installed");
 
         return instrumentation.get();
     }
 
-    public ClassFileTransformer getClassFileTransformer() {
+    public static ClassFileTransformer getClassFileTransformer() {
         if (classFileTransformer == null)
             throw new UnsupportedOperationException("Agent not installed");
 

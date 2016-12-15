@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Duna Project
+ * Copyright (c) 2016 Duna Open Source Project
  * Ministério do Planejamento, Desenvolvimento de Gestão
  * República Federativa do Brasil
  *
@@ -7,15 +7,12 @@
  */
 package io.duna.example.echo
 
-import io.duna.core.service.Address
 import io.duna.core.service.Contract
-import io.duna.web.annotations.HttpInterface
-import io.duna.web.annotations.HttpMethod
+import io.duna.http.annotations.HttpService
 
 @Contract
-@HttpInterface
+@HttpService
 interface EchoService {
 
-  @HttpMethod(HttpMethod.Method.GET)
   fun echo(shout: String): String
 }

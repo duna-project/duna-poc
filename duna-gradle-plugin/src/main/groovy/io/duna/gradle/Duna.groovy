@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Duna Project
+ * Copyright (c) 2016 Duna Open Source Project
  * Ministério do Planejamento, Desenvolvimento de Gestão
  * República Federativa do Brasil
  *
@@ -7,7 +7,7 @@
  */
 package io.duna.gradle
 
-import io.duna.gradle.tasks.TransformContractClasses
+import io.duna.gradle.tasks.ParseHttpServicesMetadata
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPlugin
@@ -80,13 +80,12 @@ class Duna implements Plugin<Project> {
   private void createTransformTask(Project project) {
     project.tasks.create(
       name: 'transformContractClasses',
-      type: TransformContractClasses,
+      type: ParseHttpServicesMetadata,
       group: 'build',
       dependsOn: project.compileJava
     ) {
       sourceFiles = project.sourceSets.main.allSource.files
-      classesDir = project.sourceSets.main.output.classesDir
-      outputDir = project.sourceSets.main.output.classesDir
+      outputDir = project.sourceSets.main.output.resourcesDir
     }
 
     project.tasks.classes.dependsOn(project.tasks.transformContractClasses)

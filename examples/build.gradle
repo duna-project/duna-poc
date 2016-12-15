@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Duna Project
+ * Copyright (c) 2016 Duna Open Source Project
  * Ministério do Planejamento, Desenvolvimento de Gestão
  * República Federativa do Brasil
  *
@@ -29,7 +29,7 @@ configurations {
 dependencies {
   compile "org.jetbrains.kotlin:kotlin-stdlib:${versions.kotlin}"
   compile project(':duna-core')
-  compile project(':duna-rest-port')
+  compile project(':duna-http-port')
 
   callerCompile sourceSets.main.runtimeClasspath
   callerCompile sourceSets.echo.output

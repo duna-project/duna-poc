@@ -1,0 +1,22 @@
+/*
+ * Copyright (c) 2016 Duna Open Source Project
+ * Ministério do Planejamento, Desenvolvimento de Gestão
+ * República Federativa do Brasil
+ *
+ * This file is part of the Duna Project.
+ */
+apply plugin: 'java'
+apply plugin: 'groovy'
+
+repositories {
+  mavenCentral()
+  maven { url "http://spoon.gforge.inria.fr/repositories/releases/" }
+}
+
+dependencies {
+  compile project(':duna-annotations')
+  compile project(':duna-http-port-api')
+
+  testCompile "com.google.testing.compile:compile-testing:0.8"
+  testCompile "org.spockframework:spock-core:${versions.spock}"
+}

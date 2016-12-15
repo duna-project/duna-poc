@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Duna Project
+ * Copyright (c) 2016 Duna Open Source Project
  * Ministério do Planejamento, Desenvolvimento de Gestão
  * República Federativa do Brasil
  *
@@ -9,17 +9,26 @@ plugins {
   id "java-gradle-plugin"
 }
 
+apply plugin: 'antlr'
 apply plugin: 'groovy'
 
-println sourceSets.main.output.classesDir
+repositories {
+  mavenLocal()
+  mavenCentral()
+  maven { url "http://spoon.gforge.inria.fr/repositories/releases/" }
+}
 
 dependencies {
   compile gradleApi()
 
-  compile 'org.ow2.asm:asm:5.1'
-  compile 'org.ow2.asm:asm-tree:5.1'
+  compile project(':duna-http-port-api')
 
-  compile 'com.github.javaparser:javaparser-core:3.0.0-RC.1'
+  compile "fr.inria.gforge.spoon:spoon-core:5.4.0"
+  compile "org.jetbrains.kotlin:kotlin-compiler-embeddable:${versions.kotlin}"
 
-  testCompile group: 'junit', name: 'junit', version: '4.11'
+  antlr "org.antlr:antlr4:4.5"
+}
+
+generateGrammarSource {
+  outputDirectory = file("${project.buildDir}/generated-src/antlr/main/io/duna/parsing")
 }

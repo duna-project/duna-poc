@@ -1,0 +1,18 @@
+/*
+ * Copyright (c) 2016 Duna Open Source Project
+ * Ministério do Planejamento, Desenvolvimento de Gestão
+ * República Federativa do Brasil
+ *
+ * This file is part of the Duna Project.
+ */
+apply plugin: 'groovy'
+
+dependencies {
+  compile project(':duna-core')
+  compile project(':duna-http-port-api')
+
+  compile "io.vertx:vertx-web:${versions.vertx}"
+  compile "com.typesafe:config:${versions.config}"
+
+  testCompile "org.spockframework:spock-core:${versions.spock}"
+}
