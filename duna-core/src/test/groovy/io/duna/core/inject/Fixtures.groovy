@@ -23,7 +23,9 @@ class DependsOnRemoteService {
 }
 
 @Contract
-interface LocalService {}
+interface LocalService {
+  def method(String someArg)
+}
 
 @Contract
 interface RemoteService {}
@@ -31,4 +33,9 @@ interface RemoteService {}
 class NotServiceImpl implements RemoteService {}
 
 @Service
-class LocalServiceImpl implements LocalService {}
+class LocalServiceImpl implements LocalService {
+  @Override
+  def method(String someArg) {
+    return null
+  }
+}

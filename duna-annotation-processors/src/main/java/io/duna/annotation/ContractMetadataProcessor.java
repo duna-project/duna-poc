@@ -7,30 +7,52 @@
  */
 package io.duna.annotation;
 
-import io.duna.http.annotations.HttpService;
+import io.duna.http.HttpPort;
 
 import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.*;
 import javax.lang.model.util.AbstractElementVisitor8;
-import javax.tools.Diagnostic;
+import javax.tools.FileObject;
+import javax.tools.StandardLocation;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-@SupportedAnnotationTypes("io.duna.http.annotations.HttpService")
+@SupportedAnnotationTypes("io.duna.http.HttpPort")
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 public class ContractMetadataProcessor extends AbstractProcessor {
 
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-        for (Element element : roundEnv.getElementsAnnotatedWith(HttpService.class)) {
+        for (Element element : roundEnv.getElementsAnnotatedWith(HttpPort.class)) {
             ParameterMetadataVisitor visitor = new ParameterMetadataVisitor(processingEnv);
-
             element.accept(visitor, null);
 
-            processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, visitor.getMethodParameters().toString());
+            TypeElement type = (TypeElement) processingEnv.getTypeUtils().asElement(element.asType());
+
+            Map<String, List<String>> methodParameters = visitor.getMethodParameters();
+
+            try {
+                FileObject output = processingEnv.getFiler().createResource(
+                    StandardLocation.locationFor("META-INF/parameter-names"), null,
+                        type.getQualifiedName().toString());
+
+                DataOutputStream outputStream = new DataOutputStream(output.openOutputStream());
+
+                methodParameters.forEach((k, v) -> {
+                    try {
+                        outputStream.writeUTF(k + "=" + v.toString());
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                });
+            } catch (Exception e) {
+
+            }
         }
 
         return true;
@@ -42,11 +64,11 @@ public class ContractMetadataProcessor extends AbstractProcessor {
 
         private Map<String, List<String>> methodParameters = new ConcurrentHashMap<>();
 
-        public ParameterMetadataVisitor(ProcessingEnvironment processingEnv) {
+        ParameterMetadataVisitor(ProcessingEnvironment processingEnv) {
             this.processingEnv = processingEnv;
         }
 
-        public Map<String, List<String>> getMethodParameters() {
+        Map<String, List<String>> getMethodParameters() {
             return methodParameters;
         }
 
@@ -83,7 +105,7 @@ public class ContractMetadataProcessor extends AbstractProcessor {
             e.getParameters()
                 .stream()
                 .map(p -> (TypeElement) processingEnv.getTypeUtils().asElement(p.asType()))
-                .map(t -> t.getQualifiedName().toString().replace("java.lang.", ""))
+                .map(t -> t.getQualifiedName().toString())
                 .reduce((a, b) -> a + "," + b)
                 .ifPresent(signature::append);
 
@@ -97,10 +119,7 @@ public class ContractMetadataProcessor extends AbstractProcessor {
                 .map(Object::toString)
                 .forEach(parameterNames::add);
 
-            processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, signature.toString());
-            processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, parameterNames.toString());
             methodParameters.put(signature.toString(), parameterNames);
-
             return null;
         }
 

@@ -7,9 +7,10 @@
  */
 package io.duna.core.inject
 
+import io.duna.core.inject.service.LocalServiceBinderModule
+
 import com.google.inject.ConfigurationException
 import com.google.inject.Guice
-import io.duna.core.inject.service.LocalServiceBinderModule
 import spock.lang.Shared
 import spock.lang.Specification
 

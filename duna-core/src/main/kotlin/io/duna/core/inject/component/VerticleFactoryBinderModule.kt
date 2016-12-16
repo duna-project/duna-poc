@@ -9,8 +9,8 @@ package io.duna.core.inject.component
 
 import com.google.inject.AbstractModule
 import com.google.inject.multibindings.Multibinder
-import io.duna.port.PortVerticleFactory
 import io.duna.core.service.ServiceVerticleFactory
+import io.duna.port.PortVerticleFactory
 import io.vertx.core.spi.VerticleFactory
 
 object VerticleFactoryBinderModule : AbstractModule() {

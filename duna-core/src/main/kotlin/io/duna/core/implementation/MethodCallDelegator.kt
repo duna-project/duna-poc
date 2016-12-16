@@ -30,22 +30,14 @@ interface MethodCallDelegator<T> {
 
       // @formatter:off
       return ByteBuddy()
-        .subclass<Any>(method.declaringClass)
+        .subclass<Any>(Any::class.java)
         .implement(MethodCallDelegator::class.java)
           .intercept(
             MethodCall
               .invoke(method)
-              .withArgumentArrayElements(0)
-              .withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC)
-          )
-          .annotateMethod(suspendableAnnotation)
-        .method(isDeclaredBy<ByteCodeElement>(method.declaringClass)
-          .and(named<MethodDescription>(method.name)))
-          .intercept(
-            MethodCall
-              .invoke(method)
               .on(delegate)
-              .withAllArguments()
+              .withArgumentArrayElements(0, method.parameterCount)
+              .withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC)
           )
           .annotateMethod(suspendableAnnotation)
         .make()

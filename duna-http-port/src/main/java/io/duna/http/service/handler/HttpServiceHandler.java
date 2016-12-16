@@ -7,10 +7,11 @@
  */
 package io.duna.http.service.handler;
 
+import io.duna.core.implementation.MethodCallDelegator;
+
 import co.paralleluniverse.fibers.Suspendable;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.assistedinject.Assisted;
-import io.duna.core.implementation.MethodCallDelegator;
 import io.vertx.core.Handler;
 import io.vertx.ext.web.RoutingContext;
 
@@ -18,7 +19,7 @@ import javax.inject.Inject;
 import java.lang.reflect.Method;
 import java.util.logging.Logger;
 
-public class RestServiceHandler<T> implements Handler<RoutingContext> {
+public class HttpServiceHandler<T> implements Handler<RoutingContext> {
 
     private final T service;
 
@@ -29,7 +30,7 @@ public class RestServiceHandler<T> implements Handler<RoutingContext> {
     private final ObjectMapper objectMapper;
 
     @Inject
-    public RestServiceHandler(@Assisted T service,
+    public HttpServiceHandler(@Assisted T service,
                               @Assisted Method method,
                               Logger logger,
                               ObjectMapper objectMapper) {
@@ -47,6 +48,6 @@ public class RestServiceHandler<T> implements Handler<RoutingContext> {
     }
 
     public interface BinderFactory {
-        RestServiceHandler<Object> create(Object service, Method method);
+        HttpServiceHandler<Object> create(Object service, Method method);
     }
 }

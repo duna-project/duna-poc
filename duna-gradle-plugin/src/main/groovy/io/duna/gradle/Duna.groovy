@@ -7,7 +7,8 @@
  */
 package io.duna.gradle
 
-import io.duna.gradle.tasks.ParseHttpServicesMetadata
+import io.duna.gradle.tasks.ParseServiceSourceMetadataTask
+
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPlugin
@@ -80,12 +81,12 @@ class Duna implements Plugin<Project> {
   private void createTransformTask(Project project) {
     project.tasks.create(
       name: 'transformContractClasses',
-      type: ParseHttpServicesMetadata,
+      type: ParseServiceSourceMetadataTask,
       group: 'build',
       dependsOn: project.compileJava
     ) {
-      sourceFiles = project.sourceSets.main.allSource.files
-      outputDir = project.sourceSets.main.output.resourcesDir
+      sourceFiles = files(project.sourceSets.main.allJava)
+      outputFile = project.sourceSets.main.output.resourcesDir
     }
 
     project.tasks.classes.dependsOn(project.tasks.transformContractClasses)

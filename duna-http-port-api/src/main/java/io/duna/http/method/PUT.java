@@ -5,14 +5,12 @@
  *
  * This file is part of the Duna Project.
  */
-package io.duna.example.echo
+package io.duna.http.method;
 
-import io.duna.core.service.Contract
-import io.duna.http.HttpPort
+import java.lang.annotation.*;
 
-@Contract
-@HttpPort
-interface EchoService {
-
-  fun echo(shout: String, myAsf: Int): String
+@Documented
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface PUT {
 }

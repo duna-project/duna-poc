@@ -5,7 +5,7 @@
  *
  * This file is part of the Duna Project.
  */
-package io.duna.http.annotations.method;
+package io.duna.http.method;
 
 import java.lang.annotation.*;
 

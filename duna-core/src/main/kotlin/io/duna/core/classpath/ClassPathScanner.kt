@@ -12,7 +12,6 @@ import io.duna.core.service.Service
 import io.duna.port.Port
 import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner
 import io.github.lukehutch.fastclasspathscanner.scanner.ScanResult
-import io.vertx.core.Verticle
 
 /**
  * Scans the classpath for application plugins.

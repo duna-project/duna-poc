@@ -63,7 +63,7 @@ object Caller {
             injector.result().injectMembers(echoProxy)
 
             fiber {
-              println("Got: ${echoProxy.echo("Yoleihu")}")
+              println("Got: ${echoProxy.echo("Yoleihu", 2)}")
             }
           }
         })

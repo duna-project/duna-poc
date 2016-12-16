@@ -5,12 +5,13 @@
  *
  * This file is part of the Duna Project.
  */
-package io.duna.http.annotations.method;
+package io.duna.annotation
 
-import java.lang.annotation.*;
+import spock.lang.Specification
 
-@Documented
-@Target(ElementType.METHOD)
-@Retention(RetentionPolicy.RUNTIME)
-public @interface PUT {
+class ContractMetadataProcessorTest extends Specification {
+
+  def "Gather metadata from @Contract interfaces"() {
+
+  }
 }

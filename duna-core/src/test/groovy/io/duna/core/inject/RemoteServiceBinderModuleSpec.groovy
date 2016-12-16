@@ -7,10 +7,11 @@
  */
 package io.duna.core.inject
 
-import com.google.inject.ConfigurationException
-import com.google.inject.Guice
 import io.duna.core.inject.service.RemoteServiceBinderModule
 import io.duna.core.proxy.GeneratedProxy
+
+import com.google.inject.ConfigurationException
+import com.google.inject.Guice
 import spock.lang.Shared
 import spock.lang.Specification
 

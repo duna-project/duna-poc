@@ -5,12 +5,12 @@
  *
  * This file is part of the Duna Project.
  */
-package io.duna.http.annotations.method;
+package io.duna.http.method;
 
 import java.lang.annotation.*;
 
 @Documented
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface OPTIONS {
+public @interface POST {
 }

@@ -7,21 +7,22 @@
  */
 package io.duna.http;
 
+import io.duna.core.service.LocalServices;
+import io.duna.http.service.handler.HttpServiceHandler;
+import io.duna.port.Port;
+
 import co.paralleluniverse.fibers.Suspendable;
 import com.google.inject.Injector;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import io.duna.core.service.LocalServices;
-import io.duna.port.Port;
-import io.duna.http.annotations.HttpService;
-import io.duna.http.service.handler.RestServiceHandler;
 import io.vertx.core.Future;
 import io.vertx.ext.sync.SyncVerticle;
 import io.vertx.ext.web.Router;
 
 import javax.inject.Inject;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
@@ -61,55 +62,69 @@ public class HttpRouterVerticle extends SyncVerticle {
 
             Injector handlerInjector = injector
                 .createChildInjector(new FactoryModuleBuilder()
-                    .implement(RestServiceHandler.class, RestServiceHandler.class)
-                    .build(RestServiceHandler.BinderFactory.class));
+                    .implement(HttpServiceHandler.class, HttpServiceHandler.class)
+                    .build(HttpServiceHandler.BinderFactory.class));
 
-            RestServiceHandler.BinderFactory handlerFactory =
-                handlerInjector.getBinding(RestServiceHandler.BinderFactory.class).getProvider().get();
+            HttpServiceHandler.BinderFactory handlerFactory =
+                handlerInjector.getBinding(HttpServiceHandler.BinderFactory.class).getProvider().get();
 
             logger.fine(() -> "Starting the HTTP router");
 
             Router router = Router.router(vertx);
 
-            Set<Class<?>> exposedServices = localServices.keySet()
-                .parallelStream()
-                .filter(c -> c.isAnnotationPresent(HttpService.class))
-                .collect(Collectors.toSet());
-
             logger.fine(() -> "Registering HTTP interfaces");
-            for (Class<?> contract : exposedServices) {
+            for (Map.Entry<Class<?>, Object> serviceEntry : localServices.entrySet()) {
+                if (!isExposed(serviceEntry.getValue())) continue;
 
-                logger.finer(() -> "Registering entry points for " + contract.getName());
-                for (Method method: contract.getMethods()) {
-//                    if (annotation == null) httpMethod = io.vertx.core.http.HttpMethod.GET;
-//                    else httpMethod = io.vertx.core.http.HttpMethod.valueOf(annotation.value().name());
-//
-//                    String address = "/" + Services.INSTANCE.getUniqueServiceAddress(method, "/");
-//
-//                    logger.info("Registering route " + address + " -> " + method.toString());
-//
-//                    router.route(httpMethod, address).handler(
-//                        fiberHandler(handlerFactory
-//                            .create(localServices.get(contract), method)));
-                }
+                Set<Method> exposedMethods = Arrays
+                    .stream(serviceEntry.getValue().getClass().getMethods())
+                    .filter(m -> m.isAnnotationPresent(HttpMethod.class))
+                    .collect(Collectors.toSet());
+
+                logger.finer(() -> "Registering HTTP routes for " + serviceEntry.getKey().getName());
+                exposedMethods.forEach(m -> {
+                    StringBuilder address = new StringBuilder("/");
+
+                    Path path = m.getAnnotation(Path.class);
+                    address.append(path != null ? path.value() : m.getName());
+
+                    logger.info(() -> "Registering route " + address + " to " + m.toString());
+
+                    Arrays.stream(m.getAnnotation(HttpMethod.class).value())
+                        .map(v -> io.vertx.core.http.HttpMethod.valueOf(v.name()))
+                        .forEach(httpMethod -> router
+                            .route(httpMethod, address.toString())
+                            .handler(fiberHandler(handlerFactory
+                            .create(serviceEntry.getValue(), m))));
+
+                    logger.fine(() -> "Route registered");
+                });
             }
 
             future.complete(router);
-
         }), fiberHandler((result) -> {
-            // Computation complete
-
+            // Route registration complete
             if (result.failed()) {
                 logger.log(Level.SEVERE, "Error while starting HTTP port", result.cause());
                 return;
             }
 
-            String serverHost = config.getString("duna.web.host");
-            int serverPort = config.getInt("duna.web.port");
+            vertx.executeBlocking(f -> {
+                String serverHost = config.getString("duna.web.host");
+                int serverPort = config.getInt("duna.web.port");
 
-            vertx.createHttpServer()
-                .requestHandler(result.result()::accept)
-                .listen(serverPort, serverHost, h -> logger.info("HTTP server started at port " + serverPort));
+                logger.fine(() -> "Starting HTTP server at port " + serverPort);
+
+                vertx.createHttpServer()
+                    .requestHandler(result.result()::accept)
+                    .listen(serverPort, serverHost, h -> logger.info("HTTP server started at port " + serverPort));
+
+                f.complete();
+            }, res -> {});
         }));
+    }
+
+    private boolean isExposed(Object service) {
+        return service.getClass().isAnnotationPresent(HttpPort.class);
     }
 }

@@ -9,7 +9,6 @@ package io.duna.util
 
 import com.google.common.primitives.Primitives
 import com.google.inject.BindingAnnotation
-import io.duna.core.service.Address
 import io.duna.core.service.Service
 import java.lang.reflect.Method
 import javax.inject.Qualifier

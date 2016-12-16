@@ -7,8 +7,9 @@
  */
 package io.duna.instrument;
 
-import co.paralleluniverse.fibers.Suspendable;
 import io.duna.test.utils.ClassFileExtraction;
+
+import co.paralleluniverse.fibers.Suspendable;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
@@ -18,14 +19,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.lang.instrument.ClassFileTransformer;
-import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Method;
 
 import static net.bytebuddy.dynamic.loading.ClassInjector.DEFAULT_PROTECTION_DOMAIN;
 import static net.bytebuddy.matcher.ElementMatchers.is;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class SuspendableMethodTransformerTest {
 

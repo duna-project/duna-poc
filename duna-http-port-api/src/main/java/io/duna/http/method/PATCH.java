@@ -5,12 +5,12 @@
  *
  * This file is part of the Duna Project.
  */
-package io.duna.http.annotations;
+package io.duna.http.method;
 
 import java.lang.annotation.*;
 
 @Documented
-@Target(ElementType.TYPE)
+@Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface HttpService {
+public @interface PATCH {
 }

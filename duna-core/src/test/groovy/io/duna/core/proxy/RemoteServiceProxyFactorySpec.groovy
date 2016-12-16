@@ -9,6 +9,7 @@ package io.duna.core.proxy
 
 import io.duna.core.DunaException
 import io.duna.core.service.Contract
+
 import io.vertx.core.json.Json
 import spock.lang.Shared
 import spock.lang.Specification

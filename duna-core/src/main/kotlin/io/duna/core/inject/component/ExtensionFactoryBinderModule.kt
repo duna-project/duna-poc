@@ -10,10 +10,10 @@ package io.duna.core.inject.component
 import com.google.inject.AbstractModule
 import com.google.inject.assistedinject.FactoryModuleBuilder
 import com.google.inject.multibindings.Multibinder
-import io.duna.port.Port
 import io.duna.core.classpath.ClassPathScanner
 import io.duna.core.service.ServiceVerticle
 import io.duna.core.service.handler.DefaultServiceHandler
+import io.duna.port.Port
 
 object ExtensionFactoryBinderModule : AbstractModule() {
   override fun configure() {

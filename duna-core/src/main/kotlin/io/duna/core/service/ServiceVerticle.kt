@@ -15,7 +15,6 @@ import io.vertx.core.buffer.Buffer
 import io.vertx.core.eventbus.EventBus
 import io.vertx.ext.sync.Sync.fiberHandler
 import io.vertx.ext.sync.SyncVerticle
-import net.bytebuddy.description.type.TypeDescription
 import java.util.logging.Logger
 import javax.inject.Inject
 

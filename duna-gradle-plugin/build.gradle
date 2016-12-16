@@ -12,19 +12,13 @@ plugins {
 apply plugin: 'antlr'
 apply plugin: 'groovy'
 
-repositories {
-  mavenLocal()
-  mavenCentral()
-  maven { url "http://spoon.gforge.inria.fr/repositories/releases/" }
-}
-
 dependencies {
   compile gradleApi()
 
   compile project(':duna-http-port-api')
 
-  compile "fr.inria.gforge.spoon:spoon-core:5.4.0"
-  compile "org.jetbrains.kotlin:kotlin-compiler-embeddable:${versions.kotlin}"
+  compile "com.github.javaparser:javaparser-core:3.0.0-RC.2"
+  compile "org.mapdb:mapdb:3.0.2"
 
   antlr "org.antlr:antlr4:4.5"
 }

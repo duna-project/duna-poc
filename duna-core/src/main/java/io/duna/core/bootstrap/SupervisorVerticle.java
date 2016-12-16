@@ -7,17 +7,18 @@
  */
 package io.duna.core.bootstrap;
 
+import io.duna.core.classpath.ClassPathScanner;
+import io.duna.core.inject.component.ExtensionFactoryBinderModule;
+import io.duna.core.inject.component.VerticleFactoryBinderModule;
+import io.duna.core.inject.service.LocalServiceBinderModule;
+import io.duna.core.inject.service.RemoteServiceBinderModule;
+import io.duna.core.service.LocalServices;
+import io.duna.port.Port;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import io.duna.core.classpath.ClassPathScanner;
-import io.duna.core.inject.component.ExtensionFactoryBinderModule;
-import io.duna.core.inject.service.LocalServiceBinderModule;
-import io.duna.core.inject.service.RemoteServiceBinderModule;
-import io.duna.core.inject.component.VerticleFactoryBinderModule;
-import io.duna.core.service.LocalServices;
-import io.duna.port.Port;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -74,9 +75,6 @@ public class SupervisorVerticle extends AbstractVerticle {
                 .parallelStream()
                 .map(c -> "duna:" + c.getName())
                 .forEach(vertx::deployVerticle);
-
-            System.out.println(ports);
-            System.out.println(ClassPathScanner.INSTANCE.getPortExtensions());
 
             ports
                 .stream()

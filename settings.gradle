@@ -7,11 +7,11 @@
  */
 rootProject.name = 'duna-parent'
 include 'duna-agent'
+include 'duna-annotation-processors'
 include 'duna-annotations'
 include 'duna-core'
 include 'duna-gradle-plugin'
 include 'duna-http-port'
-include 'duna-metadata-processors'
-include 'examples'
 include 'duna-http-port-api'
+include 'examples'
 

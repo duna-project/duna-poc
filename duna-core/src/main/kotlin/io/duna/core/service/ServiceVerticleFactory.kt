@@ -10,7 +10,6 @@ package io.duna.core.service
 import com.google.inject.Injector
 import com.google.inject.Key
 import io.vertx.core.Verticle
-import io.vertx.core.Vertx
 import io.vertx.core.spi.VerticleFactory
 import java.util.logging.Logger
 import javax.inject.Inject

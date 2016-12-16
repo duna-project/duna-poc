@@ -10,6 +10,7 @@ package io.duna.agent;
 import io.duna.core.service.Contract;
 import io.duna.instrument.AgentInstrumentationListener;
 import io.duna.instrument.SuspendableMethodsTransformer;
+
 import net.bytebuddy.agent.builder.AgentBuilder;
 
 import java.lang.instrument.ClassFileTransformer;
