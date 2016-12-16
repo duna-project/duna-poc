@@ -11,6 +11,8 @@ dependencies {
   compile project(':duna-core')
   compile project(':duna-http-port-api')
 
+  compile "org.jetbrains.kotlinx:kotlinx.reflect.lite:1.0.0"
+
   compile "io.vertx:vertx-web:${versions.vertx}"
   compile "com.typesafe:config:${versions.config}"
 

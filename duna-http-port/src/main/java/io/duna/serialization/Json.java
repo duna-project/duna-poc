@@ -5,12 +5,13 @@
  *
  * This file is part of the Duna Project.
  */
-package io.duna.http.method;
+package io.duna.serialization;
 
-import java.lang.annotation.*;
+import javax.inject.Qualifier;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
-@Documented
-@Target(ElementType.METHOD)
+@Qualifier
 @Retention(RetentionPolicy.RUNTIME)
-public @interface DELETE {
+public @interface Json {
 }

@@ -33,7 +33,7 @@ object Services {
 
     val methodAddress = StringBuilder()
     methodAddress
-      .append("${method.declaringClass.name}.${method.name}(")
+      .append("${method.declaringClass.name}$separator${method.name}(")
       .append(
         method.parameterTypes
           .map { Primitives.wrap(it) }
