@@ -31,6 +31,7 @@ configurations {
 dependencies {
   compile "org.jetbrains.kotlin:kotlin-stdlib:${versions.kotlin}"
   compile project(':duna-core')
+  compile project(':duna-cluster')
   compile project(':duna-http-port')
 
   callerCompile sourceSets.main.runtimeClasspath

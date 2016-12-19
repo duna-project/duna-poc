@@ -7,7 +7,7 @@
  */
 package io.duna.annotation;
 
-import io.duna.http.HttpPort;
+import io.duna.http.HttpPath;
 
 import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
@@ -23,12 +23,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-@SupportedAnnotationTypes("io.duna.http.HttpPort")
+@SupportedAnnotationTypes("io.duna.http.HttpPath")
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 public class ContractMetadataProcessor extends AbstractProcessor {
 
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-        for (Element element : roundEnv.getElementsAnnotatedWith(HttpPort.class)) {
+        for (Element element : roundEnv.getElementsAnnotatedWith(HttpPath.class)) {
             ParameterMetadataVisitor visitor = new ParameterMetadataVisitor(processingEnv);
             element.accept(visitor, null);
 

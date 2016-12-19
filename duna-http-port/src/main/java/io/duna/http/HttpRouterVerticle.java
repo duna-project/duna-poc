@@ -31,10 +31,8 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static io.vertx.ext.sync.Sync.fiberHandler;
-import static java.util.stream.Stream.concat;
 
 @Port
 public class HttpRouterVerticle extends SyncVerticle {
@@ -62,7 +60,7 @@ public class HttpRouterVerticle extends SyncVerticle {
     public void start() throws Exception {
         logger.info(() -> "Starting the HTTP port");
 
-        vertx.executeBlocking(fiberHandler((Future<Router> future) -> {
+        vertx.executeBlocking((Future<Router> future) -> {
             logger.fine(() -> "Creating child injector with web handler factory");
 
             Injector handlerInjector = injector
@@ -90,7 +88,15 @@ public class HttpRouterVerticle extends SyncVerticle {
             for (Map.Entry<Class<?>, Object> serviceEntry : localServices.entrySet()) {
                 if (!isExposed(serviceEntry.getKey())) continue;
 
-                Set<Method> exposedMethods = Arrays
+                final String servicePath;
+
+                 if (serviceEntry.getKey().isAnnotationPresent(HttpPath.class)) {
+                     servicePath = serviceEntry.getKey().getAnnotation(HttpPath.class).value();
+                 } else {
+                     servicePath = "/" + serviceEntry.getKey().getName();
+                 }
+
+                    Set<Method> exposedMethods = Arrays
                     .stream(serviceEntry.getKey().getMethods())
                     .filter(m -> m.isAnnotationPresent(HttpInterface.class) ||
                         m.isAnnotationPresent(HttpInterfaces.class))
@@ -98,27 +104,33 @@ public class HttpRouterVerticle extends SyncVerticle {
 
                 logger.finer(() -> "Registering HTTP routes for " + serviceEntry.getKey().getName());
 
-                exposedMethods.forEach(m -> // concat(
-                    // Arrays.stream(m.getAnnotation(HttpInterfaces.class).value()),
-                    Arrays.stream(m.getAnnotationsByType(HttpInterface.class)) //)
-                    .forEach(annotation -> {
-                        try {
-                            router
-                                .route(HttpMethod.valueOf(annotation.method().name()), annotation.path())
-                                .handler(fiberHandler(handlerFactory
-                                    .create(serviceEntry.getValue(), m)));
+                // Register HTTP interfaces
+                exposedMethods.forEach(
+                    m -> Arrays.stream(m.getAnnotationsByType(HttpInterface.class))
+                        .forEach(annotation -> {
+                            try {
+                                String methodPath;
 
-                            logger.finer(() -> "Registered route " + annotation.path() + " to " + m.toString());
-                        } catch (IllegalArgumentException e) {
-                            logger.severe(() -> "Can't register route '" +
-                                annotation.path() + "' to '" + m.toString() +
-                                "'. The path must start with /.");
-                        }
-                    }));
+                                if (!annotation.path().startsWith("/"))
+                                    methodPath = "/" + annotation.path();
+                                else
+                                    methodPath = annotation.path();
+
+                                router
+                                    .route(HttpMethod.valueOf(annotation.method().name()), servicePath + methodPath)
+                                    .handler(fiberHandler(handlerFactory.create(serviceEntry.getValue(), m)));
+
+                                logger.finer(() -> "Registered route " + annotation.path() + " to " + m.toString());
+                            } catch (IllegalArgumentException e) {
+                                logger.severe(() -> "Can't register route '" +
+                                    annotation.path() + "' to '" + m.toString() +
+                                    "'. The path must start with /.");
+                            }
+                        }));
             }
 
             future.complete(router);
-        }), fiberHandler((result) -> {
+        }, fiberHandler((result) -> {
             // Route registration complete
             if (result.failed()) {
                 logger.log(Level.SEVERE, "Error while starting HTTP port", result.cause());
@@ -133,7 +145,8 @@ public class HttpRouterVerticle extends SyncVerticle {
 
                 vertx.createHttpServer()
                     .requestHandler(result.result()::accept)
-                    .listen(serverPort, serverHost, h -> logger.info("HTTP server started at port " + serverPort));
+                    .listen(serverPort, serverHost,
+                        h -> logger.info("HTTP server started at port " + serverPort));
 
                 f.complete();
             }, res -> {
@@ -142,6 +155,6 @@ public class HttpRouterVerticle extends SyncVerticle {
     }
 
     private boolean isExposed(Class<?> contract) {
-        return contract.isAnnotationPresent(HttpPort.class);
+        return contract.isAnnotationPresent(HttpPath.class);
     }
 }

@@ -10,7 +10,7 @@ package io.duna.example.echo.impl
 import io.duna.core.service.Service
 import io.duna.example.echo.EchoService
 import io.duna.http.HttpInterface
-import io.duna.http.HttpPort
+import io.duna.http.HttpPath
 import io.duna.http.HttpMethod
 
 @Service

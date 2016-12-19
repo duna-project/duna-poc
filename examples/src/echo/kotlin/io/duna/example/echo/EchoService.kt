@@ -11,10 +11,10 @@ import io.duna.core.service.Contract
 import io.duna.http.HttpInterface
 import io.duna.http.HttpInterfaces
 import io.duna.http.HttpMethod
-import io.duna.http.HttpPort
+import io.duna.http.HttpPath
 
 @Contract
-@HttpPort
+@HttpPath
 interface EchoService {
 
   @HttpInterfaces(

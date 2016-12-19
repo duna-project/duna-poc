@@ -5,12 +5,10 @@
  *
  * This file is part of the Duna Project.
  */
-package io.duna.http;
+package io.duna.core.inject;
 
-import java.lang.annotation.*;
-
-@Documented
-@Target(ElementType.TYPE)
-@Retention(RetentionPolicy.RUNTIME)
-public @interface HttpPort {
+/**
+ * Created by carlos on 19/12/16.
+ */
+public class VerticleBinderModule {
 }

@@ -30,10 +30,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
-/**
- * Created by carlos on 13/12/16.
- */
-@SuppressWarnings({"unused", "MismatchedQueryAndUpdateOfCollection", "SpringAutowiredFieldsWarningInspection"})
+@SuppressWarnings("ALL")
 public class SupervisorVerticle extends AbstractVerticle {
 
     @Inject
@@ -50,45 +47,53 @@ public class SupervisorVerticle extends AbstractVerticle {
 
     @Override
     public void start(Future<Void> startFuture) throws Exception {
-        Injector injector = Guice.createInjector(new AbstractModule() {
-            @Override
-            protected void configure() {
-                bind(Vertx.class).toInstance(Vertx.currentContext().owner());
-                bind(ObjectMapper.class).toInstance(Json.mapper);
+        vertx.executeBlocking((Future<Injector> f) -> {
+            Injector injector = Guice.createInjector(new AbstractModule() {
+                @Override
+                protected void configure() {
+                    bind(Vertx.class).toInstance(Vertx.currentContext().owner());
+                    bind(ObjectMapper.class).toInstance(Json.mapper);
 
-                install(VerticleFactoryBinderModule.INSTANCE);
+                    install(VerticleFactoryBinderModule.INSTANCE);
 
-                install(RemoteServiceBinderModule.INSTANCE);
-                install(LocalServiceBinderModule.INSTANCE);
+                    install(RemoteServiceBinderModule.INSTANCE);
+                    install(LocalServiceBinderModule.INSTANCE);
 
-                install(ExtensionFactoryBinderModule.INSTANCE);
+                    install(ExtensionFactoryBinderModule.INSTANCE);
+                }
+            });
+
+            f.complete(injector);
+        }, res -> {
+            if (res.failed()) {
+                System.err.println("Error while starting the injector.");
+                res.cause().printStackTrace();
+                return;
             }
-        });
 
-        injector.injectMembers(this);
+            res.result().injectMembers(this);
 
-        verticleFactories.forEach(vertx::registerVerticleFactory);
+            ClassPathScanner.INSTANCE.setScanResult(null);
 
-        vertx.executeBlocking(f -> {
-            localServices
-                .keySet()
-                .parallelStream()
-                .map(c -> "duna:" + c.getName())
-                .forEach(vertx::deployVerticle);
+            verticleFactories.forEach(vertx::registerVerticleFactory);
 
-            ports
-                .stream()
-                .map(p -> "Registering port " + p)
-                .forEach(logger::info);
+            vertx.executeBlocking(f -> {
+                localServices
+                    .keySet()
+                    .stream()
+                    .map(c -> "duna:" + c.getName())
+                    .forEach(vertx::deployVerticle);
 
-            ports
-                .parallelStream()
-                .map(p -> "duna-port:" + p)
-                .forEach(vertx::deployVerticle);
+                ports
+                    .stream()
+                    .map(p -> "duna-port:" + p)
+                    .forEach(vertx::deployVerticle);
 
-            f.complete();
-        }, r -> {
-            startFuture.complete();
+                f.complete();
+            }, r -> {
+                System.gc();
+                startFuture.complete();
+            });
         });
     }
 }

@@ -7,6 +7,7 @@
  */
 package io.duna.core.classpath
 
+import com.typesafe.config.ConfigFactory
 import io.duna.core.service.Contract
 import io.duna.core.service.Service
 import io.duna.port.Port
@@ -18,14 +19,20 @@ import io.github.lukehutch.fastclasspathscanner.scanner.ScanResult
  */
 object ClassPathScanner {
 
-  private var scanResult: ScanResult = FastClasspathScanner()
-    .scan(Runtime.getRuntime().availableProcessors())
+  private val config = ConfigFactory.load()
+
+  var scanResult: ScanResult? =
+    FastClasspathScanner(
+      *config.getStringList("duna.classpath.ignore-packages")
+        .map { "-$it" }
+        .toTypedArray()
+    ).scan()
 
   fun getPortExtensions(): List<String> = scanResult
-    .getNamesOfClassesWithAnnotation(Port::class.java)
+    ?.getNamesOfClassesWithAnnotation(Port::class.java)!!
 
   fun getAllServices(): List<String> = scanResult
-      .getNamesOfClassesWithAnnotation(Contract::class.java)
+    ?.getNamesOfClassesWithAnnotation(Contract::class.java)!!
 
   fun getLocalServices(): List<String> = getAllServices()
       .filter { getImplementationsInClasspath(it).isNotEmpty() }
@@ -34,10 +41,10 @@ object ClassPathScanner {
       .filter { getImplementationsInClasspath(it).isEmpty() }
 
   fun getImplementationsInClasspath(contract: String): Set<String> = scanResult
-      .getNamesOfClassesImplementing(contract)
-      .intersect(scanResult.getNamesOfClassesWithAnnotation(Service::class.java))
+      ?.getNamesOfClassesImplementing(contract)!!
+      .intersect(scanResult?.getNamesOfClassesWithAnnotation(Service::class.java)!!)
 
   fun getImplementationsInClasspath(contract: Class<*>): Set<String> = scanResult
-      .getNamesOfClassesImplementing(contract)
-      .intersect(scanResult.getNamesOfClassesWithAnnotation(Service::class.java))
+      ?.getNamesOfClassesImplementing(contract)!!
+      .intersect(scanResult?.getNamesOfClassesWithAnnotation(Service::class.java)!!)
 }

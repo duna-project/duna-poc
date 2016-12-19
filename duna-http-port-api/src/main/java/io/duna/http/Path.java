@@ -16,7 +16,7 @@ import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.TYPE;
 
 @Documented
-@Target({TYPE, METHOD})
+@Target({TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Path {
     String value();

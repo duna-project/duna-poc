@@ -14,13 +14,13 @@
     </Appenders>
 
     <Loggers>
-        <Root level="OFF">
+        <Root level="INFO">
             <AppenderRef ref="Console" />
         </Root>
 
         <Logger name="io.duna" level="TRACE"/>
         <Logger name="io.vertx" level="INFO"/>
         <Logger name="vert.x-*" level="INFO"/>
-        <Logger name="org.apache.ignite" level="WARN"/>
+        <Logger name="org.apache.ignite" level="INFO"/>
     </Loggers>
 </Configuration>

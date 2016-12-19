@@ -57,18 +57,10 @@ public class HttpServiceHandler<T> implements Handler<RoutingContext> {
         this.parameters = new HashMap<>(method.getParameterCount());
 
         if (method.getDeclaringClass().isAnnotationPresent(Metadata.class)) {
+            // Kotlin code
             ClassMetadata metadata = ReflectionLite.INSTANCE.loadClassMetadata(method.getDeclaringClass());
-        }
-
-        for (Parameter param : method.getParameters()) {
-            Param paramAnnotation = param.getAnnotation(Param.class);
-
-            if (paramAnnotation != null) {
-                parameterOrder.add(paramAnnotation.value());
-            } else {
-//                if ()
-
-            }
+        } else {
+            // Java code
         }
 
         this.address = method.getDeclaringClass().getName() + "." +
