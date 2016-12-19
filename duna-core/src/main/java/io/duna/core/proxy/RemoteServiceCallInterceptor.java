@@ -5,7 +5,10 @@
  *
  * This file is part of the Duna Project.
  */
-package io.duna.gradle
+package io.duna.core.proxy;
 
-class DunaOptionsExtension {
+/**
+ * Created by carlos on 19/12/16.
+ */
+public class RemoteServiceCallInterceptor {
 }

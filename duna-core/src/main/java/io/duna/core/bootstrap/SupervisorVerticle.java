@@ -8,9 +8,10 @@
 package io.duna.core.bootstrap;
 
 import io.duna.core.classpath.ClassPathScanner;
+import io.duna.core.context.ClasspathScanner;
+import io.duna.core.inject.LocalServiceBinderModule;
 import io.duna.core.inject.component.ExtensionFactoryBinderModule;
 import io.duna.core.inject.component.VerticleFactoryBinderModule;
-import io.duna.core.inject.service.LocalServiceBinderModule;
 import io.duna.core.inject.service.RemoteServiceBinderModule;
 import io.duna.core.service.LocalServices;
 import io.duna.port.Port;
@@ -40,7 +41,10 @@ public class SupervisorVerticle extends AbstractVerticle {
     private Set<VerticleFactory> verticleFactories;
 
     @Inject @LocalServices
-    private Map<Class<?>, Object> localServices;
+    private Map<Class<?>, Set<Object>> localServices;
+
+    @Inject @LocalServices
+    private Set<String> localServiceNames;
 
     @Inject @Port
     private Set<String> ports;
@@ -48,16 +52,21 @@ public class SupervisorVerticle extends AbstractVerticle {
     @Override
     public void start(Future<Void> startFuture) throws Exception {
         vertx.executeBlocking((Future<Injector> f) -> {
+            ClasspathScanner classpathScanner = new ClasspathScanner();
+
             Injector injector = Guice.createInjector(new AbstractModule() {
                 @Override
                 protected void configure() {
-                    bind(Vertx.class).toInstance(Vertx.currentContext().owner());
-                    bind(ObjectMapper.class).toInstance(Json.mapper);
+                    bind(Vertx.class)
+                        .toInstance(vertx);
+
+                    bind(ObjectMapper.class)
+                        .toInstance(Json.mapper);
 
                     install(VerticleFactoryBinderModule.INSTANCE);
 
                     install(RemoteServiceBinderModule.INSTANCE);
-                    install(LocalServiceBinderModule.INSTANCE);
+                    install(new LocalServiceBinderModule(classpathScanner));
 
                     install(ExtensionFactoryBinderModule.INSTANCE);
                 }
@@ -78,10 +87,9 @@ public class SupervisorVerticle extends AbstractVerticle {
             verticleFactories.forEach(vertx::registerVerticleFactory);
 
             vertx.executeBlocking(f -> {
-                localServices
-                    .keySet()
+                localServiceNames
                     .stream()
-                    .map(c -> "duna:" + c.getName())
+                    .map(n -> "duna:" + n)
                     .forEach(vertx::deployVerticle);
 
                 ports

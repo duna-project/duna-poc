@@ -5,12 +5,14 @@
  *
  * This file is part of the Duna Project.
  */
-package io.duna.core.service;
+package io.duna.core.proxy;
 
-import java.lang.annotation.*;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-@Documented
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Service {
+public @interface GeneratedProxy {
 }
