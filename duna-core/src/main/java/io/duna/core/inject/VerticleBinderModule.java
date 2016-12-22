@@ -7,8 +7,36 @@
  */
 package io.duna.core.inject;
 
-/**
- * Created by carlos on 19/12/16.
- */
-public class VerticleBinderModule {
+import io.duna.core.service.ServiceVerticle;
+import io.duna.core.service.ServiceVerticleFactory;
+import io.duna.core.service.handler.DefaultServiceHandler;
+import io.duna.extend.PortVerticleFactory;
+
+import com.google.inject.AbstractModule;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.multibindings.Multibinder;
+import io.vertx.core.spi.VerticleFactory;
+
+public class VerticleBinderModule extends AbstractModule {
+    @Override
+    protected void configure() {
+        Multibinder<VerticleFactory> verticleFactoryBinder = Multibinder.newSetBinder(binder(),
+            VerticleFactory.class);
+
+        verticleFactoryBinder
+            .addBinding()
+            .to(ServiceVerticleFactory.class);
+
+        verticleFactoryBinder
+            .addBinding()
+            .to(PortVerticleFactory.class);
+
+        install(new FactoryModuleBuilder()
+            .implement(ServiceVerticle.class, ServiceVerticle.class)
+            .build(ServiceVerticle.BinderFactory.class));
+
+        install(new FactoryModuleBuilder()
+            .implement(DefaultServiceHandler.class, DefaultServiceHandler.class)
+            .build(DefaultServiceHandler.BinderFactory.class));
+    }
 }

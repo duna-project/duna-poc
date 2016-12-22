@@ -7,11 +7,12 @@
  */
 package io.duna.core.util;
 
-import com.google.common.primitives.Primitives;
-import com.google.inject.BindingAnnotation;
+import io.duna.core.service.Address;
 import io.duna.core.service.Service;
 
-import javax.inject.Qualifier;
+import com.google.common.primitives.Primitives;
+import com.google.inject.internal.Annotations;
+
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -19,23 +20,23 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-/**
- * Created by carlos on 19/12/16.
- */
 public class Services {
 
-    public static Map<String, String> methodAddressCache =
+    private static Map<String, String> methodAddressCache =
         new ConcurrentHashMap<>();
 
-    public static Annotation getQualifier(Class<?> serviceClass) {
+    public static Class<? extends Annotation> getQualifier(Class<?> serviceClass) {
         return Arrays
             .stream(serviceClass.getAnnotations())
-            .filter(a -> !a.annotationType().equals(Service.class) &&
-                (a.annotationType().isAnnotationPresent(Qualifier.class) ||
-                    a.annotationType().isAnnotationPresent(BindingAnnotation.class))
-            )
+            .filter(a -> !(a instanceof Service))
+            .map(Annotation::annotationType)
+            .filter(Annotations::isBindingAnnotation)
             .findFirst()
             .orElse(null);
+    }
+
+    public static String getInternalServiceAddress(Method method) {
+        return getInternalServiceAddress(method, ".");
     }
 
     public static String getInternalServiceAddress(Method method, CharSequence separator) {
@@ -43,16 +44,28 @@ public class Services {
             return methodAddressCache.get(method.toGenericString());
         }
 
-        String methodAddress = method.getDeclaringClass().getName() +
-            separator +
-            method.getName() +
-            "(" +
-            Arrays.stream(method.getParameterTypes())
-                .map(Primitives::wrap)
-                .map(pt -> pt.getName().replace("java\\.lang\\.", ""))
-                .collect(Collectors.joining(",")) +
-            ")";
+        String prefix;
+        String methodAddress;
 
-        return methodAddressCache.put(method.toGenericString(), methodAddress);
+        if (method.getDeclaringClass().isAnnotationPresent(Address.class)) {
+            prefix = method.getDeclaringClass().getAnnotation(Address.class).value();
+        } else {
+            prefix = method.getDeclaringClass().getName();
+        }
+
+        if (method.isAnnotationPresent(Address.class)) {
+            methodAddress = method.getAnnotation(Address.class).value();
+        } else {
+            methodAddress = method.getName() +
+                "(" +
+                Arrays.stream(method.getParameterTypes())
+                    .map(Primitives::wrap)
+                    .map(pt -> pt.getName().replace("java\\.lang\\.", ""))
+                    .collect(Collectors.joining(","))
+                + ")";
+        }
+
+        methodAddressCache.put(method.toGenericString(), prefix + "." + methodAddress);
+        return prefix + separator + methodAddress;
     }
 }

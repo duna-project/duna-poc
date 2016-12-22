@@ -8,16 +8,17 @@
 package io.duna.example.caller
 
 import co.paralleluniverse.fibers.Suspendable
-import co.paralleluniverse.kotlin.fiber
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.inject.AbstractModule
 import com.google.inject.Guice
 import com.google.inject.Injector
-import io.duna.core.bootstrap.IgniteClusterManagerFactory
-import io.duna.core.inject.component.ExtensionFactoryBinderModule
-import io.duna.core.proxy.RemoteServiceProxyFactory
+import io.duna.core.cluster.HazelcastClusterManagerFactory
+import io.duna.core.inject.VerticleBinderModule
+import io.duna.core.proxy.ServiceProxyFactory
 import io.duna.core.service.ServiceVerticleFactory
 import io.duna.example.echo.EchoService
+import io.duna.example.echo.QualifiedService
+import io.netty.channel.DefaultChannelId
 import io.vertx.core.Future
 import io.vertx.core.Vertx
 import io.vertx.core.VertxOptions
@@ -30,13 +31,15 @@ object Caller {
     System.setProperty("java.util.logging.manager",
       "org.apache.logging.log4j.jul.LogManager")
 
-    val clusterManager = IgniteClusterManagerFactory.create()
+    DefaultChannelId.newInstance()
+
+    val clusterManager = HazelcastClusterManagerFactory.create()
 
     val vertxOptions = VertxOptions()
       .setClusterManager(clusterManager)
 
-    val echoProxyClass = RemoteServiceProxyFactory()
-      .loadProxyForService(EchoService::class.java)
+    val echoProxyClass = ServiceProxyFactory.loadForContract(EchoService::class.java,
+      QualifiedService::class.java)
 
     Vertx.clusteredVertx(vertxOptions) {
       it.result().executeBlocking({ future: Future<Injector> ->
@@ -46,7 +49,10 @@ object Caller {
             bind(ObjectMapper::class.java).toInstance(Json.mapper)
             bind(ServiceVerticleFactory::class.java).asEagerSingleton()
 
-            install(ExtensionFactoryBinderModule)
+            bind(EchoService::class.java)
+              .toInstance(echoProxyClass.newInstance() as EchoService)
+
+            install(VerticleBinderModule())
           }
         })
 
@@ -54,17 +60,16 @@ object Caller {
       }, { injector ->
         if (injector.failed()) {
           injector.cause().printStackTrace()
+          return@executeBlocking
         }
 
         it.result().deployVerticle(object : SyncVerticle() {
           @Suspendable
           override fun start() {
-            val echoProxy = echoProxyClass.newInstance()
-            injector.result().injectMembers(echoProxy)
+            val echoProxy = injector.result().getInstance(EchoService::class.java)
 
-            fiber {
-              println("Got: ${echoProxy.echo("Yoleihu", 2)}")
-            }
+            val result = echoProxy.echo("Yoleihu")
+            println("Got $result")
           }
         })
       })

@@ -7,14 +7,16 @@
   ~ This file is part of the Duna Project.
   -->
 <Configuration status="OFF">
-  <Appenders>
-    <Console name="Console" target="SYSTEM_OUT">
-      <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
-    </Console>
-  </Appenders>
-  <Loggers>
-    <Root level="OFF">
-      <AppenderRef ref="Console"/>
-    </Root>
-  </Loggers>
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+        </Console>
+    </Appenders>
+    <Loggers>
+        <Root level="DEBUG">
+            <AppenderRef ref="Console"/>
+        </Root>
+
+        <Logger name="com.google" level="WARN"/>
+    </Loggers>
 </Configuration>

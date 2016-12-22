@@ -11,31 +11,26 @@ import io.duna.core.service.Contract
 import io.duna.core.service.Service
 
 import javax.inject.Inject
-
-class DependsOnLocalService {
-  @Inject
-  LocalService localService
-}
-
-class DependsOnRemoteService {
-  @Inject
-  RemoteService remoteService
-}
+import javax.inject.Qualifier
+import java.lang.annotation.Retention
+import java.lang.annotation.RetentionPolicy
 
 @Contract
-interface LocalService {
-  def method(String someArg)
-}
+interface LocalService {}
 
 @Contract
 interface RemoteService {}
 
-class NotServiceImpl implements RemoteService {}
+@Qualifier
+@Retention(RetentionPolicy.RUNTIME)
+@interface ServiceQualifier {}
 
 @Service
 class LocalServiceImpl implements LocalService {
-  @Override
-  def method(String someArg) {
-    return null
+  RemoteService remoteService
+
+  @Inject
+  LocalServiceImpl(@ServiceQualifier RemoteService remoteService) {
+    this.remoteService = remoteService
   }
 }

@@ -8,16 +8,24 @@
 package io.duna.core.context;
 
 import io.duna.core.service.Contract;
-import io.duna.port.Port;
+import io.duna.core.service.Service;
+import io.duna.extend.Port;
 
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner;
 import io.github.lukehutch.fastclasspathscanner.scanner.ClassInfo;
 import io.github.lukehutch.fastclasspathscanner.scanner.ScanResult;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ClasspathScanner {
 
@@ -25,47 +33,65 @@ public class ClasspathScanner {
 
     private List<String> allContracts;
 
-    private List<String> localServices;
+    private Set<String> localServices;
 
-    private List<String> remoteServices;
+    private Set<String> remoteServices;
 
-    private Map<String, Set<ClassInfo>> implementationsList;
+    private Map<String, List<ClassInfo>> implementationsList;
 
     public ClasspathScanner() {
         ExecutorService executorService = Executors
-            .newFixedThreadPool(6);
+            .newFixedThreadPool(2);
 
-        ScanResult result = new FastClasspathScanner()
+        Config config = ConfigFactory.load();
+
+        String[] scanSpec =
+            Stream.concat(
+                config.getStringList("duna.classpath.scan-packages").stream(),
+                config.getStringList("duna.classpath.ignore-packages")
+                    .stream()
+                    .map(p -> "-" + p))
+            .toArray(String[]::new);
+
+        ScanResult result = new FastClasspathScanner(scanSpec)
             .enableFieldTypeIndexing(false)
             .enableMethodAnnotationIndexing(false)
             .ignoreFieldVisibility(false)
             .ignoreMethodVisibility(false)
-            .scan(executorService, 6);
+            .scan(executorService, 2);
 
         portExtensions = result.getNamesOfClassesWithAnnotation(Port.class);
         allContracts = result.getNamesOfClassesWithAnnotation(Contract.class);
 
-        localServices = new ArrayList<>();
-        remoteServices = new ArrayList<>();
         implementationsList = new ConcurrentHashMap<>();
 
-        allContracts
+        remoteServices = allContracts
             .parallelStream()
-            .forEach(contract -> {
-                Set<ClassInfo> implementations = result.getClassNameToClassInfo()
-                    .get(contract)
-                    .getClassesImplementing();
+            .filter(contract -> result.getClassNameToClassInfo()
+                .get(contract)
+                .getClassesImplementing()
+                .stream()
+                .noneMatch(ci -> ci.hasDirectAnnotation(Service.class.getName())))
+            .collect(Collectors.toCollection(HashSet::new));
 
-                if (implementations.isEmpty()) {
-                    remoteServices.add(contract);
-                } else {
-                    localServices.add(contract);
-                    implementationsList.put(
-                        contract,
-                        implementations
-                    );
-                }
-            });
+        localServices = allContracts
+            .parallelStream()
+            .filter(contract -> result.getClassNameToClassInfo()
+                .get(contract)
+                .getClassesImplementing()
+                .stream()
+                .anyMatch(ci -> ci.hasDirectAnnotation(Service.class.getName())))
+            .collect(Collectors.toCollection(HashSet::new));
+
+        implementationsList = localServices
+            .parallelStream()
+            .collect(Collectors.toConcurrentMap(lc -> lc, lc -> result.getClassNameToClassInfo()
+                .get(lc)
+                .getClassesImplementing()
+                .stream()
+                .filter(ci -> ci.hasDirectAnnotation(Service.class.getName()))
+                .collect(Collectors.toList())
+            ));
 
         executorService.shutdown();
     }
@@ -78,15 +104,15 @@ public class ClasspathScanner {
         return allContracts;
     }
 
-    public List<String> getLocalServices() {
+    public Set<String> getLocalServices() {
         return localServices;
     }
 
-    public List<String> getRemoteServices() {
+    public Set<String> getRemoteServices() {
         return remoteServices;
     }
 
-    public Map<String, Set<ClassInfo>> getImplementationsList() {
+    public Map<String, List<ClassInfo>> getImplementationsList() {
         return implementationsList;
     }
 }

@@ -7,14 +7,13 @@
  */
 package io.duna.core.bootstrap;
 
-import io.duna.core.classpath.ClassPathScanner;
 import io.duna.core.context.ClasspathScanner;
-import io.duna.core.inject.LocalServiceBinderModule;
-import io.duna.core.inject.component.ExtensionFactoryBinderModule;
-import io.duna.core.inject.component.VerticleFactoryBinderModule;
-import io.duna.core.inject.service.RemoteServiceBinderModule;
+import io.duna.core.inject.ExtensionBinderModule;
+import io.duna.core.inject.LocalServicesBinderModule;
+import io.duna.core.inject.RemoteServicesBinderModule;
+import io.duna.core.inject.VerticleBinderModule;
 import io.duna.core.service.LocalServices;
-import io.duna.port.Port;
+import io.duna.extend.Port;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.AbstractModule;
@@ -27,21 +26,18 @@ import io.vertx.core.json.Json;
 import io.vertx.core.spi.VerticleFactory;
 
 import javax.inject.Inject;
-import java.util.Map;
 import java.util.Set;
+import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 @SuppressWarnings("ALL")
 public class SupervisorVerticle extends AbstractVerticle {
 
-    @Inject
-    private Logger logger;
+    private Logger logger = LogManager.getLogManager()
+        .getLogger(SupervisorVerticle.class.getName());
 
     @Inject
     private Set<VerticleFactory> verticleFactories;
-
-    @Inject @LocalServices
-    private Map<Class<?>, Set<Object>> localServices;
 
     @Inject @LocalServices
     private Set<String> localServiceNames;
@@ -51,57 +47,41 @@ public class SupervisorVerticle extends AbstractVerticle {
 
     @Override
     public void start(Future<Void> startFuture) throws Exception {
-        vertx.executeBlocking((Future<Injector> f) -> {
-            ClasspathScanner classpathScanner = new ClasspathScanner();
+        ClasspathScanner classpathScanner = new ClasspathScanner();
 
-            Injector injector = Guice.createInjector(new AbstractModule() {
-                @Override
-                protected void configure() {
-                    bind(Vertx.class)
-                        .toInstance(vertx);
+        Injector injector = Guice.createInjector(new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(Vertx.class)
+                    .toInstance(vertx);
 
-                    bind(ObjectMapper.class)
-                        .toInstance(Json.mapper);
+                bind(ObjectMapper.class)
+                    .toInstance(Json.mapper);
 
-                    install(VerticleFactoryBinderModule.INSTANCE);
+                install(new LocalServicesBinderModule(classpathScanner));
+                install(new RemoteServicesBinderModule(classpathScanner));
 
-                    install(RemoteServiceBinderModule.INSTANCE);
-                    install(new LocalServiceBinderModule(classpathScanner));
-
-                    install(ExtensionFactoryBinderModule.INSTANCE);
-                }
-            });
-
-            f.complete(injector);
-        }, res -> {
-            if (res.failed()) {
-                System.err.println("Error while starting the injector.");
-                res.cause().printStackTrace();
-                return;
+                install(new VerticleBinderModule());
+                install(new ExtensionBinderModule(classpathScanner));
             }
-
-            res.result().injectMembers(this);
-
-            ClassPathScanner.INSTANCE.setScanResult(null);
-
-            verticleFactories.forEach(vertx::registerVerticleFactory);
-
-            vertx.executeBlocking(f -> {
-                localServiceNames
-                    .stream()
-                    .map(n -> "duna:" + n)
-                    .forEach(vertx::deployVerticle);
-
-                ports
-                    .stream()
-                    .map(p -> "duna-port:" + p)
-                    .forEach(vertx::deployVerticle);
-
-                f.complete();
-            }, r -> {
-                System.gc();
-                startFuture.complete();
-            });
         });
+
+
+        injector.injectMembers(this);
+
+        verticleFactories.forEach(vertx::registerVerticleFactory);
+
+        localServiceNames
+            .stream()
+            .map(n -> "duna:" + n)
+            .forEach(vertx::deployVerticle);
+
+        ports
+            .stream()
+            .map(p -> "duna-port:" + p)
+            .forEach(vertx::deployVerticle);
+
+        System.gc();
+        startFuture.complete();
     }
 }

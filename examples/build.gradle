@@ -19,6 +19,7 @@ targetCompatibility = "1.8"
 
 sourceSets {
   echo
+  echoApi
   caller
 }
 
@@ -32,13 +33,17 @@ dependencies {
   compile "org.jetbrains.kotlin:kotlin-stdlib:${versions.kotlin}"
   compile project(':duna-core')
   compile project(':duna-cluster')
-  compile project(':duna-http-port')
 
   callerCompile sourceSets.main.runtimeClasspath
-  callerCompile sourceSets.echo.output
+  callerCompile sourceSets.echoApi.output
   callerCompile "co.paralleluniverse:quasar-kotlin:0.7.7"
 
+  echoApiCompile sourceSets.main.runtimeClasspath
+  echoApiCompile project(':duna-http-port-api')
+  echoApiRuntime project(':duna-http-port')
+
   echoCompile sourceSets.main.runtimeClasspath
+  echoCompile (sourceSets.echoApi.output)
   echoCompile project(':duna-agent')
 
   duna project(':duna-agent')
@@ -81,7 +86,7 @@ task capsule(type: Jar, dependsOn: echoJar) {
   }
 }
 
-static def getDependencies(config) {
+static getDependencies(config) {
   return config.getAllDependencies().collect {
     def res = it.group + ':' + it.name + ':' + it.version +
       (!it.artifacts.isEmpty() ? ':' + it.artifacts.iterator().next().classifier : '')

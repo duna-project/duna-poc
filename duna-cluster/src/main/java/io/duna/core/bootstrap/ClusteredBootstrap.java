@@ -7,10 +7,12 @@
  */
 package io.duna.core.bootstrap;
 
-import io.duna.core.cluster.IgniteClusterManagerFactory;
+import io.duna.core.cluster.HazelcastClusterManagerFactory;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import io.netty.channel.DefaultChannelId;
+import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.spi.cluster.ClusterManager;
@@ -20,18 +22,20 @@ import org.apache.logging.log4j.Logger;
 public class ClusteredBootstrap {
 
     public static void main(String ... args) {
+        Logger rootLogger = LogManager.getRootLogger();
+        rootLogger.info(() -> "Starting the cluster node");
+
         Config config = ConfigFactory.load();
-        ClusterManager clusterManager = IgniteClusterManagerFactory.create();
+        ClusterManager clusterManager = HazelcastClusterManagerFactory.create();
+
+        // Load default netty channel to prevent the BlockedThreadChecker exception
+        DefaultChannelId.newInstance();
 
         VertxOptions vertxOptions = new VertxOptions()
             .setClustered(true)
             .setClusterManager(clusterManager)
-            .setHAEnabled(config.getBoolean("duna.vertx.ha-enabled"))
+            .setHAEnabled(false)
             .setWorkerPoolSize(config.getInt("duna.thread-pool-size"));
-
-        Logger rootLogger = LogManager.getRootLogger();
-
-        rootLogger.info(() -> "Starting the cluster node");
 
         Vertx.clusteredVertx(vertxOptions, result -> {
             if (result.failed()) {
@@ -42,7 +46,14 @@ public class ClusteredBootstrap {
             }
 
             rootLogger.debug(() -> "Deploying the verticle supervisor");
-            result.result().deployVerticle(new SupervisorVerticle());
+
+            DeploymentOptions supervisorOptions = new DeploymentOptions()
+                .setHa(false)
+                .setInstances(1)
+                .setMultiThreaded(false)
+                .setWorker(true);
+
+            result.result().deployVerticle(new SupervisorVerticle(), supervisorOptions);
         });
     }
 }

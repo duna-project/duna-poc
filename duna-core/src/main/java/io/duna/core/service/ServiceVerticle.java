@@ -8,21 +8,15 @@
 package io.duna.core.service;
 
 import io.duna.core.service.handler.DefaultServiceHandler;
-import io.duna.util.Services;
+import io.duna.core.util.Services;
 
 import co.paralleluniverse.fibers.Suspendable;
 import com.google.inject.assistedinject.Assisted;
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
-import io.vertx.core.buffer.Buffer;
-import io.vertx.core.eventbus.Message;
-import io.vertx.ext.sync.Sync;
 import io.vertx.ext.sync.SyncVerticle;
 
 import javax.inject.Inject;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.logging.Logger;
 
 import static io.vertx.ext.sync.Sync.fiberHandler;
@@ -51,30 +45,28 @@ public class ServiceVerticle extends SyncVerticle {
     @Suspendable
     @Override
     public void start() throws Exception {
-        final Annotation qualifier = Services.INSTANCE
+        final Class<? extends Annotation> qualifier = Services
             .getQualifier(serviceInstance.getClass());
 
         final String qualifierPrefix;
 
-        if (qualifier != null) qualifierPrefix = qualifier.getClass().getSimpleName() + "@";
+        if (qualifier != null) qualifierPrefix = qualifier.getName() + "@";
         else qualifierPrefix = "";
 
         logger.info(() -> "Registering verticle for service " + contractClass.getName());
 
-        for (Method method : contractClass.getMethods()) {
-            final String serviceAddress = qualifierPrefix +
-                Services.INSTANCE.getInternalServiceAddress(method, ".");
+        vertx.executeBlocking(f -> {
+            for (Method method : contractClass.getMethods()) {
+                final String serviceAddress = qualifierPrefix +
+                    Services.getInternalServiceAddress(method);
 
-            vertx.executeBlocking(
-                (Future<Handler<Message<Buffer>>> f) ->
-                    f.complete(fiberHandler(handlerFactory.create(serviceInstance, method))),
-                result -> {
-                    logger.fine(() -> "Registering consumer at address " + serviceAddress);
-                    vertx.eventBus().consumer(serviceAddress, result.result());
-                });
-        }
+                logger.fine(() -> "Registering consumer at address " + serviceAddress);
+                vertx.eventBus().consumer(serviceAddress,
+                    fiberHandler(handlerFactory.create(serviceInstance, method)));
+            }
 
-        System.gc();
+            f.complete();
+        }, res -> {});
     }
 
     public interface BinderFactory {

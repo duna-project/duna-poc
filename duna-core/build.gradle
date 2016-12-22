@@ -5,23 +5,13 @@
  *
  * This file is part of the Duna Project.
  */
-plugins {
-  id "nebula.kotlin" version "1.0.5-2"
-}
-
-apply plugin: 'kotlin'
 apply plugin: 'groovy'
 
 dependencies {
-  compile "org.jetbrains.kotlin:kotlin-stdlib:${versions.kotlin}"
-
   compile project(':duna-annotations')
 
   compile "io.vertx:vertx-core:${versions.vertx}"
   compile "io.vertx:vertx-sync:${versions.vertx}"
-  compile "io.vertx:vertx-ignite:${versions.vertx}", {
-    exclude module: 'ignite-spring'
-  }
 
   compile "co.paralleluniverse:quasar-core:${versions.quasar}:jdk8"
 
@@ -59,3 +49,6 @@ classes {
   }
 }
 
+test {
+  systemProperty 'java.util.logging.manager', 'org.apache.logging.log4j.jul.LogManager'
+}
