@@ -1,11 +1,11 @@
 /*
- * Copyright (c) 2016 Duna Project
+ * Copyright (c) 2016 Duna Open Source Project
  * Ministério do Planejamento, Desenvolvimento de Gestão
  * República Federativa do Brasil
  *
  * This file is part of the Duna Project.
  */
-package io.duna.core.cluster;
+package io.duna.cluster;
 
 import com.hazelcast.config.JoinConfig;
 import com.typesafe.config.Config;

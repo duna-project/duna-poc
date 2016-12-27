@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Duna Project
+ * Copyright (c) 2016 Duna Open Source Project
  * Ministério do Planejamento, Desenvolvimento de Gestão
  * República Federativa do Brasil
  *
@@ -106,7 +106,7 @@ public class HttpRouterVerticle extends SyncVerticle {
                 .map(contractName -> {
                     try {
                         return Class.forName(contractName);
-                    } catch (ClassNotFoundException e) {
+                    } catch (ClassNotFoundException ex) {
                         logger.warning(() -> "Class " + contractName + " not found in the classpath");
                         return null;
                     }
@@ -134,8 +134,7 @@ public class HttpRouterVerticle extends SyncVerticle {
                         h -> logger.info("HTTP server started at port " + serverPort));
 
                 f.complete();
-            }, res -> {
-            });
+            }, res -> {});
         }));
     }
 
@@ -143,8 +142,9 @@ public class HttpRouterVerticle extends SyncVerticle {
                                         HttpJsonServiceHandler.BinderFactory handlerFactory,
                                         Class<?> contractClass) {
 
-        if (!Paths.isExposed(contractClass))
+        if (!Paths.isExposed(contractClass)) {
             throw new IllegalArgumentException(contractClass.getName() + " must be exposed by an @HttpPath.");
+        }
 
         final String servicePath;
 
@@ -156,8 +156,8 @@ public class HttpRouterVerticle extends SyncVerticle {
 
         Set<Method> exposedMethods = Arrays
             .stream(contractClass.getMethods())
-            .filter(m -> m.isAnnotationPresent(HttpInterface.class) ||
-                m.isAnnotationPresent(HttpInterfaces.class))
+            .filter(m -> m.isAnnotationPresent(HttpInterface.class)
+                || m.isAnnotationPresent(HttpInterfaces.class))
             .collect(Collectors.toSet());
 
         logger.fine(() -> "Registering HTTP routes for " + contractClass.getName());
@@ -168,22 +168,22 @@ public class HttpRouterVerticle extends SyncVerticle {
                 .forEach(annotation -> {
                     String methodPath;
 
-                    if (!annotation.path().startsWith("/"))
+                    if (!annotation.path().startsWith("/")) {
                         methodPath = "/" + annotation.path();
-                    else
+                    } else {
                         methodPath = annotation.path();
+                    }
 
                     // Routing with regex currently not supported
                     Route route = router
                         .route(HttpMethod.valueOf(annotation.method().name()), servicePath + methodPath);
 
-                    if (annotation.method() != io.duna.http.HttpMethod.GET)
-                        route.consumes("*/json");
+                    if (annotation.method() != io.duna.http.HttpMethod.GET) route.consumes("*/json");
 
                     route.handler(fiberHandler(handlerFactory.create(contractClass, exposedMethod, annotation.path())));
 
-                    logger.fine(() -> "Registered route " + annotation.path() +
-                        " to " + Services.getInternalServiceAddress(exposedMethod));
+                    logger.fine(() -> "Registered route " + annotation.path()
+                        + " to " + Services.getInternalServiceAddress(exposedMethod));
                 }));
     }
 }

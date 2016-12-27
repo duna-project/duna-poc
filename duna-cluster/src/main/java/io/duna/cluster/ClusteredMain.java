@@ -1,13 +1,13 @@
 /*
- * Copyright (c) 2016 Duna Project
+ * Copyright (c) 2016 Duna Open Source Project
  * Ministério do Planejamento, Desenvolvimento de Gestão
  * República Federativa do Brasil
  *
  * This file is part of the Duna Project.
  */
-package io.duna.core.bootstrap;
+package io.duna.cluster;
 
-import io.duna.core.cluster.HazelcastClusterManagerFactory;
+import io.duna.bootstrap.SupervisorVerticle;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -19,7 +19,7 @@ import io.vertx.core.spi.cluster.ClusterManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class ClusteredBootstrap {
+public class ClusteredMain {
 
     public static void main(String ... args) {
         Logger rootLogger = LogManager.getRootLogger();

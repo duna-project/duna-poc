@@ -12,7 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.inject.AbstractModule
 import com.google.inject.Guice
 import com.google.inject.Injector
-import io.duna.core.cluster.HazelcastClusterManagerFactory
+import io.duna.cluster.HazelcastClusterManagerFactory
 import io.duna.core.inject.VerticleBinderModule
 import io.duna.core.proxy.ServiceProxyFactory
 import io.duna.core.service.ServiceVerticleFactory

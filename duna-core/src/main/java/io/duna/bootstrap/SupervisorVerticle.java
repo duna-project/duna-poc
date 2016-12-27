@@ -5,7 +5,7 @@
  *
  * This file is part of the Duna Project.
  */
-package io.duna.core.bootstrap;
+package io.duna.bootstrap;
 
 import io.duna.core.context.ClasspathScanner;
 import io.duna.core.inject.ExtensionBinderModule;
@@ -65,7 +65,6 @@ public class SupervisorVerticle extends AbstractVerticle {
                 install(new ExtensionBinderModule(classpathScanner));
             }
         });
-
 
         injector.injectMembers(this);
 

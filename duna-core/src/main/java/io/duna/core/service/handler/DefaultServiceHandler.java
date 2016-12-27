@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Duna Project
+ * Copyright (c) 2016 Duna Open Source Project
  * Ministério do Planejamento, Desenvolvimento de Gestão
  * República Federativa do Brasil
  *
@@ -32,6 +32,8 @@ import java.util.logging.Logger;
 import static io.vertx.ext.sync.Sync.getContextScheduler;
 
 public class DefaultServiceHandler implements Handler<Message<Buffer>> {
+
+    private static final int errorCode = 500;
 
     private final MethodCallDelegator delegator;
 
@@ -67,8 +69,8 @@ public class DefaultServiceHandler implements Handler<Message<Buffer>> {
 
             Object[] params = new Object[methodDescription.getParameters().size()];
 
-            parser.nextToken(); // START_ARRAY
-            parser.nextToken(); // START_OBJECT
+            parser.nextToken();
+            parser.nextToken();
             for (int i = 0; i < method.getParameterTypes().length; i++) {
                 params[i] = parser.readValueAs(method.getParameterTypes()[i]);
             }
@@ -92,10 +94,10 @@ public class DefaultServiceHandler implements Handler<Message<Buffer>> {
                 logger.finer(() -> "Sending result to request " + event.replyAddress());
                 event.reply(outputStream.getBuffer());
             }
-        } catch (IOException e) {
+        } catch (IOException ex) {
             // TODO improve error passing
-            event.fail(500, "Internal error");
-            logger.log(Level.WARNING, e, () -> "Error while processing request.");
+            event.fail(errorCode, "Internal error");
+            logger.log(Level.WARNING, ex, () -> "Error while processing request.");
         }
     }
 

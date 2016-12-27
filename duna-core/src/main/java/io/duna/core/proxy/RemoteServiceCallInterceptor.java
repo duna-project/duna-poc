@@ -37,7 +37,6 @@ public class RemoteServiceCallInterceptor {
     private final Map<String, String> addressCache = new HashMap<>();
 
     @RuntimeType
-    @SuppressWarnings("unused")
     public Object intercept(@FieldValue("logger") Logger logger,
                             @FieldValue("objectMapper") ObjectMapper objectMapper,
                             @Origin Method method,
@@ -86,7 +85,7 @@ public class RemoteServiceCallInterceptor {
                     BufferInputStream inputStream = new BufferInputStream(response.body());
                     JsonParser parser = objectMapper.getFactory().createParser(inputStream);
 
-                    Object result = parser.readValueAs(method.getReturnType());
+                    final Object result = parser.readValueAs(method.getReturnType());
 
                     parser.close();
                     outputStream.close();
@@ -97,8 +96,8 @@ public class RemoteServiceCallInterceptor {
                 }
             }
 
-        } catch (IOException | VertxException e) {
-            throw new DunaException(e);
+        } catch (IOException | VertxException ex) {
+            throw new DunaException(ex);
         }
     }
 }

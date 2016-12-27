@@ -10,6 +10,7 @@ package io.duna.http.service.handler;
 import io.duna.core.io.BufferInputStream;
 import io.duna.core.io.BufferOutputStream;
 import io.duna.core.util.Services;
+import io.duna.http.HttpResponseStatus;
 import io.duna.http.Parameter;
 import io.duna.http.util.Paths;
 import io.duna.serialization.Json;
@@ -89,11 +90,11 @@ public class HttpJsonServiceHandler<T> implements Handler<RoutingContext> {
             + Services.getInternalServiceAddress(targetMethod));
 
         if (event.getBody() != null && event.getBody().length() > 0 && event.request().method() == HttpMethod.GET) {
-            logger.info(() -> "Invalid request from " + event.request().remoteAddress() + ". " +
-                "GET requests don't provide bodies.");
+            logger.info(() -> "Invalid request from " + event.request().remoteAddress() + ". "
+                + "GET requests don't provide bodies.");
 
             event.response()
-                .setStatusCode(403)
+                .setStatusCode(HttpResponseStatus.BAD_REQUEST.code())
                 .setStatusMessage("Invalid request. GET requests can't provide a body.")
                 .end();
 
@@ -124,10 +125,10 @@ public class HttpJsonServiceHandler<T> implements Handler<RoutingContext> {
 
                     parameterValues[paramIndex] = paramValue;
                 }
-            } catch (IOException e) {
+            } catch (IOException ex) {
                 event.response()
-                    .setStatusCode(500)
-                    .setStatusMessage("Internal Server Error: " + e.getLocalizedMessage())
+                    .setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
+                    .setStatusMessage("Internal Server Error: " + ex.getLocalizedMessage())
                     .end();
                 return;
             }
@@ -150,10 +151,10 @@ public class HttpJsonServiceHandler<T> implements Handler<RoutingContext> {
             requestGenerator.flush();
             requestGenerator.close();
 
-            event.vertx().eventBus().<Buffer> send(serviceAddress, requestOutputStream.getBuffer(), res -> {
+            event.vertx().eventBus().<Buffer>send(serviceAddress, requestOutputStream.getBuffer(), res -> {
                 if (res.failed()) {
                     event.response()
-                        .setStatusCode(500)
+                        .setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
                         .setStatusMessage(res.cause().getLocalizedMessage())
                         .end();
                     return;
@@ -178,17 +179,17 @@ public class HttpJsonServiceHandler<T> implements Handler<RoutingContext> {
 
                     event.response()
                         .end(response);
-                } catch (IOException e) {
+                } catch (IOException ex) {
                     event.response()
-                        .setStatusCode(500)
-                        .setStatusMessage("Internal Server Error: " + e.getLocalizedMessage())
+                        .setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
+                        .setStatusMessage("Internal Server Error: " + ex.getLocalizedMessage())
                         .end();
                 }
             });
-        } catch (IOException e) {
+        } catch (IOException ex) {
             event.response()
-                .setStatusCode(500)
-                .setStatusMessage("Internal Server Error: " + e.getLocalizedMessage())
+                .setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
+                .setStatusMessage("Internal Server Error: " + ex.getLocalizedMessage())
                 .end();
         }
     }
@@ -235,10 +236,10 @@ public class HttpJsonServiceHandler<T> implements Handler<RoutingContext> {
 
             if (parameterUseDefaultJvmNaming) {
                 logger.warning(() ->
-                    "The service " + method.getDeclaringClass() +
-                        " does not have any parameter name information. Either compile it" +
-                        " using the -parameterIndexes flag (Java 8+), or annotate the parameterIndexes" +
-                        " with @Parameter."
+                    "The service " + method.getDeclaringClass()
+                        + " does not have any parameter name information. Either compile it"
+                        + " using the -parameterIndexes flag (Java 8+), or annotate the parameterIndexes"
+                        + " with @Parameter."
                 );
             }
         }

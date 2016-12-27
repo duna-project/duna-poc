@@ -5,42 +5,16 @@
  *
  * This file is part of the Duna Project.
  */
-plugins {
-  id "nebula.kotlin" version "1.0.5-2"
-}
-
-apply plugin: 'kotlin'
 apply plugin: 'groovy'
 
 dependencies {
-  compile "org.jetbrains.kotlin:kotlin-stdlib:${versions.kotlin}"
-
   compile project(':duna-annotations')
   compile project(':duna-core')
 
-  compile "io.vertx:vertx-core:${versions.vertx}"
-  compile "io.vertx:vertx-sync:${versions.vertx}"
-//  compile "io.vertx:vertx-ignite:${versions.vertx}" //, {
-//    exclude module: 'ignite-spring'
-//  }
   compile "io.vertx:vertx-hazelcast:${versions.vertx}"
 
-  compile "co.paralleluniverse:quasar-core:${versions.quasar}:jdk8"
-
-  compile "com.google.inject:guice:${versions.guice}"
-  compile "com.google.inject.extensions:guice-multibindings:${versions.guice}"
-  compile "com.google.inject.extensions:guice-assistedinject:${versions.guice}"
-
-  compile "net.bytebuddy:byte-buddy:${versions.byteBuddy}"
-
-//  compile "org.apache.ignite:ignite-log4j2:${versions.ignite}"
   compile "org.apache.logging.log4j:log4j-core:${versions.log4j}"
   compile "org.apache.logging.log4j:log4j-jul:${versions.log4j}"
-
-  compile "org.msgpack:msgpack-core:${versions.messagePack}"
-  compile "org.msgpack:jackson-dataformat-msgpack:${versions.messagePack}"
-
-  compile "io.github.lukehutch:fast-classpath-scanner:${versions.fastClasspathScanner}"
 
   compile "com.typesafe:config:${versions.config}"
 

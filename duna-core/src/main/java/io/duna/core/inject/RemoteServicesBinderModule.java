@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Duna Project
+ * Copyright (c) 2016 Duna Open Source Project
  * Ministério do Planejamento, Desenvolvimento de Gestão
  * República Federativa do Brasil
  *
@@ -57,9 +57,14 @@ public class RemoteServicesBinderModule extends AbstractModule {
             .stream()
             .anyMatch(remoteService -> {
                 String typeName;
-                if (element instanceof Parameter) typeName = ((Parameter) element).getType().getName();
-                else if (element instanceof Field) typeName = ((Field) element).getType().getName();
-                else return false;
+                if (element instanceof Parameter) {
+                    typeName = ((Parameter) element).getType().getName();
+                } else if (element instanceof Field) {
+                    typeName = ((Field) element).getType().getName();
+                } else {
+                    return false;
+                }
+
                 return Objects.equals(typeName, remoteService);
             });
 
@@ -95,13 +100,13 @@ public class RemoteServicesBinderModule extends AbstractModule {
         } else if (element instanceof Field) {
             contractClass = ((Field) element).getType();
         } else {
-            throw new IllegalArgumentException("The annotated element must be either a " +
-                "Parameter or a Field.");
+            throw new IllegalArgumentException("The annotated element must be either a "
+                + "Parameter or a Field.");
         }
 
         if (!contractClass.isInterface()) {
-            logger.warning(() -> "Unable to bind " + contractClass.getName() + ". " +
-                "Contracts must be declared as interfaces.");
+            logger.warning(() -> "Unable to bind " + contractClass.getName() + ". "
+                + "Contracts must be declared as interfaces.");
             return;
         }
 
@@ -133,7 +138,9 @@ public class RemoteServicesBinderModule extends AbstractModule {
             .map(s -> {
                 try {
                     return Class.forName(s.getClassName(), false, this.getClass().getClassLoader());
-                } catch (ClassNotFoundException e) { return null; }
+                } catch (ClassNotFoundException ignored) {
+                    return null;
+                }
             })
             .filter(Objects::nonNull)
             .map(UnsafeTypeLiteral::new)

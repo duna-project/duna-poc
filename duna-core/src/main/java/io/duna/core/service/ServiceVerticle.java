@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Duna Project
+ * Copyright (c) 2016 Duna Open Source Project
  * Ministério do Planejamento, Desenvolvimento de Gestão
  * República Federativa do Brasil
  *
@@ -57,8 +57,8 @@ public class ServiceVerticle extends SyncVerticle {
 
         vertx.executeBlocking(f -> {
             for (Method method : contractClass.getMethods()) {
-                final String serviceAddress = qualifierPrefix +
-                    Services.getInternalServiceAddress(method);
+                final String serviceAddress = qualifierPrefix
+                    + Services.getInternalServiceAddress(method);
 
                 logger.fine(() -> "Registering consumer at address " + serviceAddress);
                 vertx.eventBus().consumer(serviceAddress,

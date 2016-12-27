@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Duna Project
+ * Copyright (c) 2016 Duna Open Source Project
  * Ministério do Planejamento, Desenvolvimento de Gestão
  * República Federativa do Brasil
  *
@@ -43,9 +43,9 @@ public interface MethodCallDelegator {
                 .getLoaded()
                 .newInstance();
             // @formatter:on
-        } catch (InstantiationException | IllegalAccessException e) {
+        } catch (InstantiationException | IllegalAccessException ex) {
             // TODO fix this
-            e.printStackTrace();
+            ex.printStackTrace();
         }
 
         return null;

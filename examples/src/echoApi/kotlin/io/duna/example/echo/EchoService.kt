@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Duna Project
+ * Copyright (c) 2016 Duna Open Source Project
  * Ministério do Planejamento, Desenvolvimento de Gestão
  * República Federativa do Brasil
  *
@@ -7,7 +7,6 @@
  */
 package io.duna.example.echo
 
-import co.paralleluniverse.fibers.Suspendable
 import io.duna.core.service.Contract
 import io.duna.http.HttpInterface
 import io.duna.http.HttpInterfaces
@@ -19,7 +18,6 @@ import javax.inject.Qualifier
 @HttpPath("/echo")
 interface EchoService {
 
-  @Suspendable
   @HttpInterfaces(
     HttpInterface(method = HttpMethod.GET, path = "/:shout"),
     HttpInterface(method = HttpMethod.POST, path = "/echo/")

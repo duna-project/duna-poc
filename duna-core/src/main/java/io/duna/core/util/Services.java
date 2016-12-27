@@ -56,9 +56,9 @@ public class Services {
         if (method.isAnnotationPresent(Address.class)) {
             methodAddress = method.getAnnotation(Address.class).value();
         } else {
-            methodAddress = method.getName() +
-                "(" +
-                Arrays.stream(method.getParameterTypes())
+            methodAddress = method.getName()
+                + "("
+                + Arrays.stream(method.getParameterTypes())
                     .map(Primitives::wrap)
                     .map(pt -> pt.getName().replace("java\\.lang\\.", ""))
                     .collect(Collectors.joining(","))

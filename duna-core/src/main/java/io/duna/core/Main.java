@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Duna Project
+ * Copyright (c) 2016 Duna Open Source Project
  * Ministério do Planejamento, Desenvolvimento de Gestão
  * República Federativa do Brasil
  *
@@ -7,7 +7,7 @@
  */
 package io.duna.core;
 
-import io.duna.core.bootstrap.SupervisorVerticle;
+import io.duna.bootstrap.SupervisorVerticle;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -32,8 +32,8 @@ public class Main {
         Logger rootLogger = getLogManager()
             .getLogger("Duna");
 
-        rootLogger.warning(() -> "This execution mode should only be deployed in development. " +
-            "It doesn't take advantage of the parallel capabilities of Vert.x.");
+        rootLogger.warning(() -> "This execution mode should only be deployed in development. "
+            + "It doesn't take advantage of the parallel capabilities of Vert.x.");
 
         rootLogger.info(() -> "Starting standalone duna node");
 

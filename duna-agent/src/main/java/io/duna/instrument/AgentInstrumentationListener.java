@@ -26,7 +26,7 @@ import java.util.logging.Logger;
  */
 public class AgentInstrumentationListener implements AgentBuilder.Listener {
 
-    private static final Logger LOGGER = LogManager.getLogManager()
+    private static final Logger logger = LogManager.getLogManager()
         .getLogger(DunaJavaAgent.class.getName());
 
     @Override
@@ -34,19 +34,19 @@ public class AgentInstrumentationListener implements AgentBuilder.Listener {
                                  ClassLoader classLoader,
                                  JavaModule module,
                                  DynamicType dynamicType) {
-        LOGGER.fine(() -> String.format("%s will be instrumented", typeDescription));
+        logger.fine(() -> String.format("%s will be instrumented", typeDescription));
     }
 
     @Override
     public void onIgnored(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module) {
-        LOGGER.finest(() -> String.format("Instrumentation ignored type %s", typeDescription));
+        logger.finest(() -> String.format("Instrumentation ignored type %s", typeDescription));
     }
 
     @Override
     public void onError(String typeName, ClassLoader classLoader,
                         JavaModule module, Throwable throwable) {
-        LOGGER.warning(() -> String.format("Error while instrumenting %s", typeName));
-        LOGGER.fine(() -> {
+        logger.warning(() -> String.format("Error while instrumenting %s", typeName));
+        logger.fine(() -> {
             StringWriter errorWriter = new StringWriter();
             throwable.printStackTrace(new PrintWriter(errorWriter));
 
@@ -56,6 +56,6 @@ public class AgentInstrumentationListener implements AgentBuilder.Listener {
 
     @Override
     public void onComplete(String typeName, ClassLoader classLoader, JavaModule module) {
-        LOGGER.finest(() -> String.format("Instrumentation of %s complete", typeName));
+        logger.finest(() -> String.format("Instrumentation of %s complete", typeName));
     }
 }

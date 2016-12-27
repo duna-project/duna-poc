@@ -5,7 +5,14 @@
  *
  * This file is part of the Duna Project.
  */
-package io.duna.gradle.parsing
+package io.duna.core.inject
 
-class ParameterNamesVisitor {
+import spock.lang.Specification
+
+class LocalServicesBinderModuleTest extends Specification {
+  void setup() {
+
+  }
+
+
 }

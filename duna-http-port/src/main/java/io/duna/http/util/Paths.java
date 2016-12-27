@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Duna Project
+ * Copyright (c) 2016 Duna Open Source Project
  * Ministério do Planejamento, Desenvolvimento de Gestão
  * República Federativa do Brasil
  *
@@ -18,8 +18,9 @@ import java.util.regex.Pattern;
 public class Paths {
 
     public static String getHttpInterfacePath(Class<?> contractClass, HttpInterface httpInterface) {
-        if (!isExposed(contractClass))
+        if (!isExposed(contractClass)) {
             throw new IllegalArgumentException("The method provided must be an HttpInterface.");
+        }
 
         String pathPrefix = contractClass.getAnnotation(HttpPath.class).value();
         if (!pathPrefix.startsWith("/")) pathPrefix = "/" + pathPrefix;

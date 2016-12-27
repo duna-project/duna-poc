@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Duna Project
+ * Copyright (c) 2016 Duna Open Source Project
  * Ministério do Planejamento, Desenvolvimento de Gestão
  * República Federativa do Brasil
  *
@@ -40,13 +40,6 @@ public class LocalServicesBinderModule extends AbstractModule {
         logger.info(() -> "Configuring local services");
         logger.fine(() -> "Binding local service contracts");
 
-//        MapBinder<Class<?>, Object> localServicesBinder = MapBinder
-//            .newMapBinder(binder(),
-//                new TypeLiteral<Class<?>>() {},
-//                new TypeLiteral<Object>() {},
-//                LocalServices.class)
-//            .permitDuplicates();
-
         Multibinder<String> localServiceNamesBinder =
             Multibinder.newSetBinder(binder(), String.class, LocalServices.class);
 
@@ -61,15 +54,15 @@ public class LocalServicesBinderModule extends AbstractModule {
 
                 try {
                     contractClass = Class.forName(contractClassName, false, this.getClass().getClassLoader());
-                } catch (ClassNotFoundException e) {
-                    logger.log(Level.WARNING, e,
+                } catch (ClassNotFoundException ex) {
+                    logger.log(Level.WARNING, ex,
                         () -> "Error while trying to bind contract to service implementation.");
                     return;
                 }
 
                 if (!contractClass.isInterface()) {
-                    logger.warning(() -> "Unable to bind " + contractClass.getName() + ". " +
-                        "Contracts must be declared as interfaces.");
+                    logger.warning(() -> "Unable to bind " + contractClass.getName() + ". "
+                        + "Contracts must be declared as interfaces.");
                     return;
                 }
 
@@ -82,8 +75,8 @@ public class LocalServicesBinderModule extends AbstractModule {
                     .map(impl -> {
                         try {
                             return Class.forName(impl.getClassName(), false, this.getClass().getClassLoader());
-                        } catch (ClassNotFoundException e) {
-                            logger.log(Level.WARNING, e, () -> "Can't find class " + impl.getClassName()
+                        } catch (ClassNotFoundException ex) {
+                            logger.log(Level.WARNING, ex, () -> "Can't find class " + impl.getClassName()
                                 + " in the classpath.");
                             return null;
                         }
@@ -91,8 +84,8 @@ public class LocalServicesBinderModule extends AbstractModule {
                     .filter(Objects::nonNull)
                     .forEach(serviceClass -> {
                         if (serviceClass.isInterface() || Modifier.isAbstract(serviceClass.getModifiers())) {
-                            logger.warning(() -> "Unable to bind " + serviceClass.getName() + ". " +
-                                "Services must be instantiable.");
+                            logger.warning(() -> "Unable to bind " + serviceClass.getName() + ". "
+                                + "Services must be instantiable.");
                             return;
                         }
 
@@ -112,10 +105,6 @@ public class LocalServicesBinderModule extends AbstractModule {
                             localServiceNamesBinder.addBinding()
                                 .toInstance(qualifier.getName() + "@" + contractClassName);
                         }
-
-//                        localServicesBinder
-//                            .addBinding(contractClass)
-//                            .to(serviceClass);
 
                         logger.fine(() -> "Bound " + contractClass + " to " + serviceClass);
                     });

@@ -5,24 +5,9 @@
  *
  * This file is part of the Duna Project.
  */
-plugins {
-  id "java-gradle-plugin"
-}
-
-apply plugin: 'antlr'
 apply plugin: 'groovy'
 
 dependencies {
   compile gradleApi()
-
   compile project(':duna-http-port-api')
-
-  compile "com.github.javaparser:javaparser-core:3.0.0-RC.2"
-  compile "org.mapdb:mapdb:3.0.2"
-
-  antlr "org.antlr:antlr4:4.5"
-}
-
-generateGrammarSource {
-  outputDirectory = file("${project.buildDir}/generated-src/antlr/main/io/duna/parsing")
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Duna Project
+ * Copyright (c) 2016 Duna Open Source Project
  * Ministério do Planejamento, Desenvolvimento de Gestão
  * República Federativa do Brasil
  *
@@ -19,6 +19,8 @@ import java.lang.annotation.Annotation;
 import java.util.logging.Logger;
 
 public class ServiceVerticleFactory implements VerticleFactory {
+
+    private static final int factoryOrder = 5;
 
     private final Logger logger;
 
@@ -63,9 +65,10 @@ public class ServiceVerticleFactory implements VerticleFactory {
             Class<? extends Annotation> qualifierClass =
                 (Class<? extends Annotation>) classLoader.loadClass(qualifierName);
 
-            if (qualifierClass.isAnnotation() &&
-                (qualifierClass.isAnnotationPresent(Qualifier.class) ||
-                    qualifierClass.isAnnotationPresent(BindingAnnotation.class))) {
+            if (qualifierClass.isAnnotation()
+                && (qualifierClass.isAnnotationPresent(Qualifier.class)
+                    || qualifierClass.isAnnotationPresent(BindingAnnotation.class))) {
+
                 implementation = injector.getBinding(Key.get(contractClass, qualifierClass)).getProvider().get();
             } else {
                 throw new IllegalStateException("Services can only be qualified by annotations.");
@@ -77,7 +80,7 @@ public class ServiceVerticleFactory implements VerticleFactory {
 
     @Override
     public int order() {
-        return 5;
+        return factoryOrder;
     }
 
     @Override

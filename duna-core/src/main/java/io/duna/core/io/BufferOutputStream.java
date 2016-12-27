@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Duna Project
+ * Copyright (c) 2016 Duna Open Source Project
  * Ministério do Planejamento, Desenvolvimento de Gestão
  * República Federativa do Brasil
  *
@@ -30,17 +30,17 @@ public class BufferOutputStream extends OutputStream {
     }
 
     @Override
-    public void write(int b) throws IOException {
-        buffer.appendByte((byte) b);
+    public void write(int bt) throws IOException {
+        buffer.appendByte((byte) bt);
     }
 
     @Override
-    public void write(@NotNull byte[] b) throws IOException {
-        buffer.appendBytes(b);
+    public void write(@NotNull byte[] bytes) throws IOException {
+        buffer.appendBytes(bytes);
     }
 
     @Override
-    public void write(@NotNull byte[] b, int off, int len) throws IOException {
-        buffer.appendBytes(b, off, len);
+    public void write(@NotNull byte[] bytes, int off, int len) throws IOException {
+        buffer.appendBytes(bytes, off, len);
     }
 }

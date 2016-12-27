@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Duna Project
+ * Copyright (c) 2016 Duna Open Source Project
  * Ministério do Planejamento, Desenvolvimento de Gestão
  * República Federativa do Brasil
  *
@@ -34,31 +34,31 @@ public class BufferInputStream extends InputStream {
     }
 
     @Override
-    public int read(@NotNull byte[] b) throws IOException {
-        return read(b, 0, b.length);
+    public int read(@NotNull byte[] bytes) throws IOException {
+        return read(bytes, 0, bytes.length);
     }
 
     @Override
-    public int read(@NotNull byte[] b, int off, int len) throws IOException {
-        if (off + len > b.length) {
+    public int read(@NotNull byte[] bytes, int off, int len) throws IOException {
+        if (off + len > bytes.length) {
             throw new ArrayIndexOutOfBoundsException();
         }
 
         byte[] result = new byte[len];
 
         buffer.getBytes(position.get(), Math.min(len, buffer.length() - position.get()), result);
-        System.arraycopy(result, 0, b, off, len);
+        System.arraycopy(result, 0, bytes, off, len);
 
         position.addAndGet(len);
         return len;
     }
 
     @Override
-    public long skip(long n) throws IOException {
-        long begin = n;
+    public long skip(long amount) throws IOException {
+        long end = amount;
 
-        while (position.incrementAndGet() < buffer.length() && n > 0) n--;
-        return begin - n;
+        while (position.incrementAndGet() < buffer.length() && end > 0) end--;
+        return amount - end;
     }
 
     @Override

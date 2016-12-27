@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Duna Project
+ * Copyright (c) 2016 Duna Open Source Project
  * Ministério do Planejamento, Desenvolvimento de Gestão
  * República Federativa do Brasil
  *
@@ -17,7 +17,10 @@ import java.util.logging.Logger;
 
 public class PortVerticleFactory implements VerticleFactory {
 
+    private static final int factoryOrder = 10;
+
     private final Logger logger;
+
     private final Injector injector;
 
     @Inject
@@ -52,7 +55,7 @@ public class PortVerticleFactory implements VerticleFactory {
 
     @Override
     public int order() {
-        return 10;
+        return factoryOrder;
     }
 
     @Override
