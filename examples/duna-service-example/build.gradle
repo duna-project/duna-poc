@@ -1,0 +1,91 @@
+/*
+ * Copyright (c) 2016 Duna Open Source Project
+ * Ministério do Planejamento, Desenvolvimento de Gestão
+ * República Federativa do Brasil
+ *
+ * This file is part of the Duna Project.
+ */
+plugins {
+  id "us.kirchmeier.capsule" version "1.0.2"
+}
+
+group 'io.duna.example'
+version '0.2'
+
+apply plugin: 'java'
+
+repositories {
+  mavenCentral()
+  maven { url 'https://dl.bintray.com/duna-project/duna/' }
+}
+
+sourceSets {
+  impl
+  mock
+}
+
+configurations {
+  dunaAgent
+  quasarAgent
+}
+
+dependencies {
+//  compile 'io.duna:duna-annotations:0.3'
+//  compile 'io.duna:duna-http-port-api:0.3'
+  compile project(':duna-annotations')
+  compile project(':duna-http-port-api')
+
+  implCompile sourceSets.main.output
+  implCompile 'io.duna:duna-core:0.3'
+  implCompile 'io.duna:duna-cluster:0.3'
+  implCompile 'io.duna:duna-http-port:0.3'
+
+  mockCompile sourceSets.main.output
+  mockCompile 'io.duna:duna-core:0.3'
+  mockCompile 'io.duna:duna-http-port:0.3'
+
+  // Java agents
+  dunaAgent project(':duna-agent')
+  quasarAgent 'co.paralleluniverse:quasar-core:0.7.7:jdk8'
+
+  testCompile group: 'junit', name: 'junit', version: '4.11'
+}
+
+compileJava {
+  options.incremental = true
+  options.compilerArgs = ['-parameters']
+}
+
+task run(type: JavaExec) {
+  classpath sourceSets.impl.runtimeClasspath
+
+  jvmArgs '-XX:+UseG1GC',
+    '-XX:MinHeapFreeRatio=15',
+    '-XX:MaxHeapFreeRatio=30',
+    "-javaagent:${configurations.quasarAgent.iterator().next()}=mb",
+    "-javaagent:${configurations.dunaAgent.iterator().next()}",
+    '-Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager'
+
+  maxHeapSize '200m'
+
+  main = 'io.duna.cluster.ClusteredMain'
+}
+
+task runMock(type: JavaExec) {
+  classpath sourceSets.mock.runtimeClasspath
+
+  jvmArgs '-XX:+UseG1GC',
+    '-XX:MinHeapFreeRatio=15',
+    '-XX:MaxHeapFreeRatio=30',
+    "-javaagent:${configurations.quasarAgent.iterator().next()}=mb",
+    "-javaagent:${configurations.dunaAgent.iterator().next()}",
+    '-Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager'
+
+  systemProperties['java.util.logging.manager'] = 'org.apache.logging.log4j.jul.LogManager'
+
+  maxHeapSize '70m'
+
+  main = 'io.duna.cluster.Main'
+}
+
+apply from: 'capsule.gradle'
