@@ -30,10 +30,8 @@ configurations {
 }
 
 dependencies {
-//  compile 'io.duna:duna-annotations:0.3'
-//  compile 'io.duna:duna-http-port-api:0.3'
-  compile project(':duna-annotations')
-  compile project(':duna-http-port-api')
+  compile 'io.duna:duna-annotations:0.3'
+  compile 'io.duna:duna-http-port-api:0.3'
 
   implCompile sourceSets.main.output
   implCompile 'io.duna:duna-core:0.3'
