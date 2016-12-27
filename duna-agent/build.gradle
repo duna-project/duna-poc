@@ -23,8 +23,7 @@ dependencies {
     transitive = false
   }
 
-  testCompile "org.junit.jupiter:junit-jupiter-api:${versions.junit}"
-  testCompile "org.junit.jupiter:junit-jupiter-engine:${versions.junit}"
+  testCompile "junit:junit:${versions.junit}"
   testCompile "net.bytebuddy:byte-buddy-agent:${versions.byteBuddy}"
 }
 

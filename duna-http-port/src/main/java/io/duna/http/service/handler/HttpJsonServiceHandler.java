@@ -12,14 +12,12 @@ import io.duna.core.io.BufferOutputStream;
 import io.duna.core.util.Services;
 import io.duna.http.HttpResponseStatus;
 import io.duna.http.Parameter;
-import io.duna.http.util.Paths;
 import io.duna.serialization.Json;
 
 import co.paralleluniverse.fibers.Suspendable;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.primitives.Primitives;
 import com.google.inject.assistedinject.Assisted;
@@ -35,9 +33,11 @@ import kotlinx.reflect.lite.ReflectionLite;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 public class HttpJsonServiceHandler<T> implements Handler<RoutingContext> {
 
@@ -52,8 +52,6 @@ public class HttpJsonServiceHandler<T> implements Handler<RoutingContext> {
     private final Map<String, Integer> parameterIndexes;
 
     private final Map<String, Class<?>> parameterTypes;
-
-    private final Set<String> pathParameters;
 
     @Inject
     public HttpJsonServiceHandler(@Assisted Class<?> contractClass,
@@ -77,10 +75,6 @@ public class HttpJsonServiceHandler<T> implements Handler<RoutingContext> {
         } else {
             parseJavaParameterNames(method);
         }
-
-        pathParameters = Paths.getPathParameters(path)
-            .stream()
-            .collect(Collectors.toCollection(HashSet<String>::new));
     }
 
     @Suspendable
@@ -104,12 +98,12 @@ public class HttpJsonServiceHandler<T> implements Handler<RoutingContext> {
         Object[] parameterValues = new Object[targetMethod.getParameterCount()];
 
         // Parse path parameterIndexes
-        for (String param : pathParameters) {
-            int index = parameterIndexes.get(param);
-            String value = event.request().getParam(param);
+        event.request().params().forEach(entry -> {
+            int paramIndex = parameterIndexes.get(entry.getKey());
+            logger.finer(() -> "Setting parameter " + paramIndex + " with value " + entry.getValue());
 
-            parameterValues[index] = value;
-        }
+            parameterValues[paramIndex] = entry.getValue();
+        });
 
         // Parse request body to get the remaining parameterIndexes
         if (event.getBody() != null) {
@@ -123,12 +117,14 @@ public class HttpJsonServiceHandler<T> implements Handler<RoutingContext> {
                     int paramIndex = parameterIndexes.get(paramName);
                     Object paramValue = parser.readValueAs(paramType);
 
+                    logger.finer(() -> "Setting parameter " + paramIndex + " with value " + paramValue);
+
                     parameterValues[paramIndex] = paramValue;
                 }
             } catch (IOException ex) {
+                logger.log(Level.SEVERE, ex, () -> "Error while handling request from " + event.request().remoteAddress());
                 event.response()
                     .setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
-                    .setStatusMessage("Internal Server Error: " + ex.getLocalizedMessage())
                     .end();
                 return;
             }
@@ -137,6 +133,7 @@ public class HttpJsonServiceHandler<T> implements Handler<RoutingContext> {
         sendRequestToService(event, parameterValues);
     }
 
+    @Suspendable
     private void sendRequestToService(RoutingContext event, Object[] parameterValues) {
         String serviceAddress = Services.getInternalServiceAddress(targetMethod);
 
@@ -151,11 +148,11 @@ public class HttpJsonServiceHandler<T> implements Handler<RoutingContext> {
             requestGenerator.flush();
             requestGenerator.close();
 
-            event.vertx().eventBus().<Buffer>send(serviceAddress, requestOutputStream.getBuffer(), res -> {
-                if (res.failed()) {
+            event.vertx().eventBus().<Buffer>send(serviceAddress, requestOutputStream.getBuffer(), serviceResponse -> {
+                if (serviceResponse.failed()) {
                     event.response()
                         .setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
-                        .setStatusMessage(res.cause().getLocalizedMessage())
+                        .setStatusMessage(serviceResponse.cause().getLocalizedMessage())
                         .end();
                     return;
                 }
@@ -167,29 +164,30 @@ public class HttpJsonServiceHandler<T> implements Handler<RoutingContext> {
                     event.response().end();
                 }
 
-                try {
-                    BufferInputStream responseInputStream = new BufferInputStream(res.result().body());
-                    JsonNode responseJson = internalObjectMapper
-                        .reader()
-                        .readTree(responseInputStream);
+                if (serviceResponse.result().body() != null && serviceResponse.result().body().length() > 0) {
+                    try {
+                        BufferInputStream responseInputStream = new BufferInputStream(serviceResponse.result().body());
+                        JsonParser parser = internalObjectMapper.getFactory().createParser(responseInputStream);
 
-                    String response = externalObjectMapper
-                        .writer()
-                        .writeValueAsString(responseJson);
+                        Object result = parser.readValueAs(targetMethod.getReturnType());
 
-                    event.response()
-                        .end(response);
-                } catch (IOException ex) {
-                    event.response()
-                        .setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
-                        .setStatusMessage("Internal Server Error: " + ex.getLocalizedMessage())
-                        .end();
+                        event.response()
+                            .putHeader("content-type", "text/json")
+                            .end(externalObjectMapper.writeValueAsString(result));
+                    } catch (IOException ex) {
+                        logger.log(Level.SEVERE, ex, () -> "Error while handling request from " + event.request().remoteAddress());
+                        event.response()
+                            .setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
+                            .end();
+                    }
+                } else {
+                    event.response().end();
                 }
             });
         } catch (IOException ex) {
+            logger.log(Level.SEVERE, ex, () -> "Error while handling request from " + event.request().remoteAddress());
             event.response()
                 .setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
-                .setStatusMessage("Internal Server Error: " + ex.getLocalizedMessage())
                 .end();
         }
     }

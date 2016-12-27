@@ -6,7 +6,7 @@
  * This file is part of the Duna Project.
  */
 plugins {
-  id "com.jfrog.bintray" version "1.7"
+  id "com.jfrog.bintray" version "1.7.3"
 }
 
 apply from: 'gradle/versions.gradle'
@@ -16,7 +16,7 @@ configure (allprojects) {
   apply plugin: 'eclipse'
 
   group 'io.duna'
-  version '0.1.0-SNAPSHOT'
+  version '0.3'
 
   repositories {
     mavenLocal()

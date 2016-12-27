@@ -7,9 +7,6 @@
  */
 package io.duna.http;
 
-/**
- * Created by carlos on 27/12/16.
- */
 public enum HttpResponseStatus {
     BAD_REQUEST(400),
     INTERNAL_SERVER_ERROR(500);

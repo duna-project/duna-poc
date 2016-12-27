@@ -1,0 +1,43 @@
+/*
+ * Copyright (c) 2016 Duna Open Source Project
+ * Ministério do Planejamento, Desenvolvimento de Gestão
+ * República Federativa do Brasil
+ *
+ * This file is part of the Duna Project.
+ */
+task implJar(type: Jar) {
+  from sourceSets.impl.output
+}
+
+task capsule(type: Jar, dependsOn: implJar) {
+  archiveName = project.name + "-capsule.jar"
+
+  from implJar // embed our application jar
+  from { configurations.implRuntime } // embed dependencies
+
+  // we just need the single Capsule class
+  from(configurations.capsule.collect { zipTree(it) }) { include 'Capsule.class' }
+
+  manifest {
+    attributes(
+      'Main-Class'  : 'Capsule',
+      'Application-Class' : 'io.duna.cluster.ClusteredMain',
+      'Min-Java-Version' : '1.8.0',
+      'JVM-Args' : run.jvmArgs.join(' '), // copy JVM args from the run task
+      'System-Properties' : run.systemProperties.collect { k,v -> "$k=$v" }.join(' '), // copy system properties
+      'Java-Agents' : ++getDependencies(configurations.quasarAgent).iterator() +
+        ' ' + ++getDependencies(configurations.dunaAgent).iterator()
+    )
+  }
+}
+
+static getDependencies(config) {
+  return config.getAllDependencies().collect {
+    def res = it.group + ':' + it.name + ':' + it.version +
+      (!it.artifacts.isEmpty() ? ':' + it.artifacts.iterator().next().classifier : '')
+    if(!it.excludeRules.isEmpty()) {
+      res += "(" + it.excludeRules.collect { it.group + ':' + it.module }.join(',') + ")"
+    }
+    return res
+  }
+}

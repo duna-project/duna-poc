@@ -17,15 +17,20 @@ import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.jar.asm.ClassReader;
 import net.bytebuddy.jar.asm.ClassWriter;
 import net.bytebuddy.pool.TypePool;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
+/*
+ * Code copied from the ByteBuddy project.
+ * Copyright 2016 Raphael Winterhalter
+ * Licensed under Apache License 2.0
+ */
 public class ClassFileExtraction {
 
     private static final int CA = 0xCA, FE = 0xFE, BA = 0xBA, BE = 0xBE;

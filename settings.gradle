@@ -13,5 +13,7 @@ include 'duna-core'
 include 'duna-gradle-plugin'
 include 'duna-http-port'
 include 'duna-http-port-api'
-include 'examples'
+
+include 'examples:duna-service-example'
+findProject(':examples:duna-service-example')?.name = 'duna-service-example'
 

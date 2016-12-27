@@ -14,16 +14,16 @@ import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.reflect.Method;
 
 import static net.bytebuddy.dynamic.loading.ClassInjector.DEFAULT_PROTECTION_DOMAIN;
 import static net.bytebuddy.matcher.ElementMatchers.is;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.Assert.*;
 
 public class SuspendableMethodTransformerTest {
 
@@ -31,12 +31,12 @@ public class SuspendableMethodTransformerTest {
 
     private ClassLoader classLoader;
 
-    @BeforeAll
+    @BeforeClass
     public static void setUp() {
         ByteBuddyAgent.install();
     }
 
-    @BeforeEach
+    @Before
     public void beforeEach() throws Exception {
         classLoader = new ByteArrayClassLoader.ChildFirst(getClass().getClassLoader(),
             ClassFileExtraction.of(SimpleInterface.class,

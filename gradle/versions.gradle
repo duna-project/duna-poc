@@ -14,7 +14,7 @@ ext.versions = [
   guice: '4.1.0',
   ignite: '1.7.0',
   jetbrainsAnnotations: '15.0',
-  junit: '5.0.0-M2',
+  junit: '4.12',
   kotlin: '1.0.5-2',
   log4j: '2.7',
   messagePack: '0.8.11',

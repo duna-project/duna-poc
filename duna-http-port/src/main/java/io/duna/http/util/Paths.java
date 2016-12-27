@@ -23,14 +23,14 @@ public class Paths {
         }
 
         String pathPrefix = contractClass.getAnnotation(HttpPath.class).value();
-        if (!pathPrefix.startsWith("/")) pathPrefix = "/" + pathPrefix;
-
         String pathSuffix = httpInterface.path();
 
-        if (pathPrefix.endsWith("/")) {
-            if (pathSuffix.startsWith("/")) pathPrefix = pathPrefix.replaceFirst("/", "");
-        } else {
-            if (!pathSuffix.startsWith("/")) pathPrefix = "/" + pathPrefix;
+        if (!pathPrefix.startsWith("/")) pathPrefix = "/" + pathPrefix;
+
+        if (pathPrefix.endsWith("/") && pathSuffix.startsWith("/")) {
+            pathPrefix = pathPrefix.replaceFirst("/", "");
+        } else if (!pathSuffix.startsWith("/")) {
+            pathPrefix = "/" + pathPrefix;
         }
 
         return pathPrefix + pathSuffix;
@@ -45,10 +45,6 @@ public class Paths {
         }
 
         return result;
-    }
-
-    public static <T> T castParameterValue(String value, Class<T> type) {
-        return null;
     }
 
     public static boolean isExposed(Class<?> contract) {

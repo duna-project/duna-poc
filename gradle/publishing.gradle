@@ -11,6 +11,8 @@ def bintrayRepo = project.version.endsWith("-SNAPSHOT") ?
 bintray {
   user = bintrayUser
   key = bintrayApiKey
+  publish = true
+  override = true
 
   pkg {
     repo = bintrayRepo

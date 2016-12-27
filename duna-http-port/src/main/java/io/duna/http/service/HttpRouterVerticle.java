@@ -182,7 +182,7 @@ public class HttpRouterVerticle extends SyncVerticle {
 
                     route.handler(fiberHandler(handlerFactory.create(contractClass, exposedMethod, annotation.path())));
 
-                    logger.fine(() -> "Registered route " + annotation.path()
+                    logger.fine(() -> "Registered " + annotation.method() + " route " + annotation.path()
                         + " to " + Services.getInternalServiceAddress(exposedMethod));
                 }));
     }
