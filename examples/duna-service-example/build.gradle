@@ -15,7 +15,8 @@ version '0.2'
 apply plugin: 'java'
 
 repositories {
-  mavenCentral()
+  mavenLocal()
+  jcenter()
   maven { url 'https://dl.bintray.com/duna-project/duna/' }
 }
 
