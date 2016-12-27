@@ -84,7 +84,7 @@ task runMock(type: JavaExec) {
 
   maxHeapSize '70m'
 
-  main = 'io.duna.cluster.Main'
+  main = 'io.duna.core.Main'
 }
 
 apply from: 'capsule.gradle'
