@@ -19,14 +19,14 @@ task capsule(type: Jar, dependsOn: implJar) {
   from(configurations.capsule.collect { zipTree(it) }) { include 'Capsule.class' }
 
   manifest {
+    //noinspection GroovyAssignabilityCheck
     attributes(
       'Main-Class'  : 'Capsule',
-      'Application-Class' : 'io.duna.cluster.ClusteredMain',
+      'Application-Class' : 'io.duna.core.Main',
       'Min-Java-Version' : '1.8.0',
       'JVM-Args' : run.jvmArgs.join(' '), // copy JVM args from the run task
       'System-Properties' : run.systemProperties.collect { k,v -> "$k=$v" }.join(' '), // copy system properties
-      'Java-Agents' : ++getDependencies(configurations.quasarAgent).iterator() +
-        ' ' + ++getDependencies(configurations.dunaAgent).iterator()
+      'Java-Agents' : ++getDependencies(configurations.quasarAgent).iterator()
     )
   }
 }

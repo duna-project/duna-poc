@@ -61,11 +61,10 @@ task run(type: JavaExec) {
   jvmArgs '-XX:+UseG1GC',
     '-XX:MinHeapFreeRatio=15',
     '-XX:MaxHeapFreeRatio=30',
+    '-Xmx150m',
     "-javaagent:${configurations.quasarAgent.iterator().next()}=mb",
     "-javaagent:${configurations.dunaAgent.iterator().next()}",
     '-Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager'
-
-  maxHeapSize '200m'
 
   main = 'io.duna.cluster.ClusteredMain'
 }
