@@ -31,17 +31,22 @@ configurations {
 }
 
 dependencies {
-  compile 'io.duna:duna-annotations:0.3'
-  compile 'io.duna:duna-http-port-api:0.3'
+//  compile 'io.duna:duna-annotations:0.3'
+//  compile 'io.duna:duna-http-port-api:0.3'
+  compile project(':duna-annotations')
+  compile project(':duna-http-port-api')
 
   implCompile sourceSets.main.output
-  implCompile 'io.duna:duna-core:0.3'
-  implCompile 'io.duna:duna-cluster:0.3'
-  implCompile 'io.duna:duna-http-port:0.3'
+//  implCompile 'io.duna:duna-core:0.3'
+//  implCompile 'io.duna:duna-cluster:0.3'
+//  implCompile 'io.duna:duna-http-port:0.3'
+  implCompile project(':duna-core')
+  implCompile project(':duna-cluster')
+  implCompile project(':duna-http-port')
 
   mockCompile sourceSets.main.output
-  mockCompile 'io.duna:duna-core:0.3'
-  mockCompile 'io.duna:duna-http-port:0.3'
+//  mockCompile 'io.duna:duna-core:0.3'
+//  mockCompile 'io.duna:duna-http-port:0.3'
 
   // Java agents
   dunaAgent 'io.duna:duna-agent:0.3'

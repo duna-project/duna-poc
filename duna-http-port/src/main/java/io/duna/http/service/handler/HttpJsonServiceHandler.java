@@ -97,12 +97,21 @@ public class HttpJsonServiceHandler<T> implements Handler<RoutingContext> {
 
         Object[] parameterValues = new Object[targetMethod.getParameterCount()];
 
-        // Parse path parameterIndexes
+        // Parse path parameters
         event.request().params().forEach(entry -> {
             int paramIndex = parameterIndexes.get(entry.getKey());
             logger.finer(() -> "Setting parameter " + paramIndex + " with value " + entry.getValue());
 
-            parameterValues[paramIndex] = entry.getValue();
+            if (parameterTypes.get(entry.getKey()).equals(String.class)) {
+                parameterValues[paramIndex] = entry.getValue();
+            } else {
+                try {
+                    parameterValues[paramIndex] = internalObjectMapper
+                        .readValue(entry.getValue(), parameterTypes.get(entry.getKey()));
+                } catch (IOException ex) {
+                    logger.log(Level.WARNING, ex, () -> "Error while deserializing parameter " + entry.getKey());
+                }
+            }
         });
 
         // Parse request body to get the remaining parameterIndexes
@@ -150,9 +159,10 @@ public class HttpJsonServiceHandler<T> implements Handler<RoutingContext> {
 
             event.vertx().eventBus().<Buffer>send(serviceAddress, requestOutputStream.getBuffer(), serviceResponse -> {
                 if (serviceResponse.failed()) {
+                    logger.log(Level.SEVERE, serviceResponse.cause(), () -> "Request to service failed.");
+
                     event.response()
                         .setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
-                        .setStatusMessage(serviceResponse.cause().getLocalizedMessage())
                         .end();
                     return;
                 }
@@ -236,7 +246,7 @@ public class HttpJsonServiceHandler<T> implements Handler<RoutingContext> {
                 logger.warning(() ->
                     "The service " + method.getDeclaringClass()
                         + " does not have any parameter name information. Either compile it"
-                        + " using the -parameterIndexes flag (Java 8+), or annotate the parameterIndexes"
+                        + " using the -parameters flag (Java 8+), or annotate the parameters"
                         + " with @Parameter."
                 );
             }

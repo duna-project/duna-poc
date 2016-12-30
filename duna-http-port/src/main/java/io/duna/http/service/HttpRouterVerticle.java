@@ -8,7 +8,7 @@
 package io.duna.http.service;
 
 import io.duna.core.context.ClasspathScanner;
-import io.duna.core.service.LocalServices;
+import io.duna.core.service.InterfaceMapper;
 import io.duna.core.util.Services;
 import io.duna.extend.Port;
 import io.duna.http.HttpInterface;
@@ -46,8 +46,6 @@ import static io.vertx.ext.sync.Sync.fiberHandler;
 @Port
 public class HttpRouterVerticle extends SyncVerticle {
 
-    private final Set<String> localServiceNames;
-
     private final Logger logger;
 
     private final Injector injector;
@@ -55,10 +53,8 @@ public class HttpRouterVerticle extends SyncVerticle {
     private final Config config;
 
     @Inject
-    public HttpRouterVerticle(@LocalServices Set<String> localServiceNames,
-                              Logger logger,
+    public HttpRouterVerticle(Logger logger,
                               Injector injector) {
-        this.localServiceNames = localServiceNames;
         this.logger = logger;
         this.injector = injector;
         this.config = ConfigFactory.load();
@@ -72,13 +68,16 @@ public class HttpRouterVerticle extends SyncVerticle {
         vertx.executeBlocking((Future<Router> future) -> {
             logger.fine(() -> "Creating child injector with web handler factory");
 
+            ObjectMapper jsonObjectMapper = new ObjectMapper();
+            jsonObjectMapper.registerModule(new InterfaceMapper("external"));
+
             Injector handlerInjector = injector
                 .createChildInjector(new AbstractModule() {
                     @Override
                     protected void configure() {
                         bind(ObjectMapper.class)
                             .annotatedWith(Json.class)
-                            .toInstance(io.vertx.core.json.Json.prettyMapper);
+                            .toInstance(jsonObjectMapper);
 
                         install(new FactoryModuleBuilder()
                             .implement(HttpJsonServiceHandler.class, HttpJsonServiceHandler.class)
@@ -134,7 +133,9 @@ public class HttpRouterVerticle extends SyncVerticle {
                         h -> logger.info("HTTP server started at port " + serverPort));
 
                 f.complete();
-            }, res -> {});
+            }, res -> {
+                System.gc();
+            });
         }));
     }
 

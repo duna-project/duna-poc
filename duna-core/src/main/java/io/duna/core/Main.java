@@ -41,5 +41,6 @@ public class Main {
 
         rootLogger.fine(() -> "Deploying the supervisor");
         vertx.deployVerticle(new SupervisorVerticle());
+        System.gc();
     }
 }

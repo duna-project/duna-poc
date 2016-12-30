@@ -40,25 +40,42 @@ public class ClasspathScanner {
     private Map<String, List<ClassInfo>> implementationsList;
 
     public ClasspathScanner() {
-        ExecutorService executorService = Executors
-            .newFixedThreadPool(2);
-
         Config config = ConfigFactory.load();
+
+        ScanResult result;
+
+        List<String> packagesToScan = config.getStringList("duna.classpath.scan-packages");
+        packagesToScan.add("io.duna");
 
         String[] scanSpec =
             Stream.concat(
-                config.getStringList("duna.classpath.scan-packages").stream(),
+                packagesToScan.stream(),
                 config.getStringList("duna.classpath.ignore-packages")
                     .stream()
                     .map(p -> "-" + p))
-            .toArray(String[]::new);
+                .toArray(String[]::new);
 
-        ScanResult result = new FastClasspathScanner(scanSpec)
-            .enableFieldTypeIndexing(false)
-            .enableMethodAnnotationIndexing(false)
-            .ignoreFieldVisibility(false)
-            .ignoreMethodVisibility(false)
-            .scan(executorService, 2);
+        boolean parallelScanning = config.getBoolean("duna.classpath.parallel");
+        if (parallelScanning) {
+            ExecutorService executorService = Executors
+                .newFixedThreadPool(2);
+
+            result = new FastClasspathScanner(scanSpec)
+                .enableFieldTypeIndexing(false)
+                .enableMethodAnnotationIndexing(false)
+                .ignoreFieldVisibility(false)
+                .ignoreMethodVisibility(false)
+                .scan(executorService, 2);
+
+            executorService.shutdown();
+        } else {
+            result = new FastClasspathScanner(scanSpec)
+                .enableFieldTypeIndexing(false)
+                .enableMethodAnnotationIndexing(false)
+                .ignoreFieldVisibility(false)
+                .ignoreMethodVisibility(false)
+                .scan();
+        }
 
         portExtensions = result.getNamesOfClassesWithAnnotation(Port.class);
         allContracts = result.getNamesOfClassesWithAnnotation(Contract.class);
@@ -74,8 +91,9 @@ public class ClasspathScanner {
                 .noneMatch(ci -> ci.hasDirectAnnotation(Service.class.getName())))
             .collect(Collectors.toCollection(HashSet::new));
 
-        localServices = allContracts
-            .parallelStream()
+        localServices = (parallelScanning
+            ? allContracts.parallelStream()
+            : allContracts.stream())
             .filter(contract -> result.getClassNameToClassInfo()
                 .get(contract)
                 .getClassesImplementing()
@@ -83,8 +101,9 @@ public class ClasspathScanner {
                 .anyMatch(ci -> ci.hasDirectAnnotation(Service.class.getName())))
             .collect(Collectors.toCollection(HashSet::new));
 
-        implementationsList = localServices
-            .parallelStream()
+        implementationsList = (parallelScanning
+            ? localServices.parallelStream()
+            : localServices.stream())
             .collect(Collectors.toConcurrentMap(lc -> lc, lc -> result.getClassNameToClassInfo()
                 .get(lc)
                 .getClassesImplementing()
@@ -92,8 +111,6 @@ public class ClasspathScanner {
                 .filter(ci -> ci.hasDirectAnnotation(Service.class.getName()))
                 .collect(Collectors.toList())
             ));
-
-        executorService.shutdown();
     }
 
     public List<String> getPortExtensions() {

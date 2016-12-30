@@ -63,10 +63,13 @@ public class ServiceVerticle extends SyncVerticle {
                 logger.fine(() -> "Registering consumer at address " + serviceAddress);
                 vertx.eventBus().consumer(serviceAddress,
                     fiberHandler(handlerFactory.create(serviceInstance, method)));
+                logger.finer(() -> "Consumer registered");
             }
 
             f.complete();
-        }, res -> {});
+        }, res -> {
+            logger.finer(() -> "Verticle registered");
+        });
     }
 
     public interface BinderFactory {

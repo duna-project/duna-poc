@@ -28,7 +28,7 @@ public class Paths {
         if (!pathPrefix.startsWith("/")) pathPrefix = "/" + pathPrefix;
 
         if (pathPrefix.endsWith("/") && pathSuffix.startsWith("/")) {
-            pathPrefix = pathPrefix.replaceFirst("/", "");
+            pathPrefix = pathPrefix.substring(0, pathPrefix.lastIndexOf("/"));
         } else if (!pathSuffix.startsWith("/")) {
             pathPrefix = "/" + pathPrefix;
         }

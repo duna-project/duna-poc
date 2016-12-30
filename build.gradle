@@ -26,7 +26,7 @@ configure (allprojects) {
 
 configure (subprojects) {
   apply plugin: 'java'
-  apply plugin: 'checkstyle'
+//  apply plugin: 'checkstyle'
 
   apply plugin: 'com.jfrog.bintray'
   apply plugin: 'maven-publish'
@@ -36,29 +36,29 @@ configure (subprojects) {
   sourceCompatibility = 1.8
   targetCompatibility = 1.8
 
-  afterEvaluate {
-    tasks.findByName('check').dependsOn('checkstyleMain')
-  }
+//  afterEvaluate {
+//    tasks.findByName('check').dependsOn('checkstyleMain')
+//  }
 
-  checkstyle {
-    //noinspection GroovyAssignabilityCheck
-    configFile rootProject.file('config/checkstyle/duna.xml')
-    configProperties = [
-      checkstyleDir: "${rootDir}/config/checkstyle",
-      projectDir: rootDir
-    ]
-    ignoreFailures = false
-    showViolations = true
-    toolVersion = "7.3"
-  }
-
-  tasks.withType(Checkstyle) {
-    reports {
-      xml.enabled false
-      html.enabled true
-      html.stylesheet resources.text.fromFile("${rootDir}/config/checkstyle/format.xsl")
-    }
-  }
+//  checkstyle {
+//    //noinspection GroovyAssignabilityCheck
+//    configFile rootProject.file('config/checkstyle/duna.xml')
+//    configProperties = [
+//      checkstyleDir: "${rootDir}/config/checkstyle",
+//      projectDir: rootDir
+//    ]
+//    ignoreFailures = false
+//    showViolations = true
+//    toolVersion = "7.3"
+//  }
+//
+//  tasks.withType(Checkstyle) {
+//    reports {
+//      xml.enabled false
+//      html.enabled true
+//      html.stylesheet resources.text.fromFile("${rootDir}/config/checkstyle/format.xsl")
+//    }
+//  }
 }
 
 gradle.beforeProject {

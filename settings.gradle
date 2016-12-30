@@ -16,4 +16,3 @@ include 'duna-http-port-api'
 
 include 'examples:duna-service-example'
 findProject(':examples:duna-service-example')?.name = 'duna-service-example'
-

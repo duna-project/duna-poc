@@ -12,6 +12,7 @@ import io.duna.core.inject.ExtensionBinderModule;
 import io.duna.core.inject.LocalServicesBinderModule;
 import io.duna.core.inject.RemoteServicesBinderModule;
 import io.duna.core.inject.VerticleBinderModule;
+import io.duna.core.service.InterfaceMapper;
 import io.duna.core.service.LocalServices;
 import io.duna.extend.Port;
 
@@ -22,8 +23,8 @@ import com.google.inject.Injector;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.Json;
 import io.vertx.core.spi.VerticleFactory;
+import org.msgpack.jackson.dataformat.MessagePackFactory;
 
 import javax.inject.Inject;
 import java.util.Set;
@@ -47,40 +48,56 @@ public class SupervisorVerticle extends AbstractVerticle {
 
     @Override
     public void start(Future<Void> startFuture) throws Exception {
-        ClasspathScanner classpathScanner = new ClasspathScanner();
+        vertx.<Injector>executeBlocking(future -> {
+            ClasspathScanner classpathScanner = new ClasspathScanner();
 
-        Injector injector = Guice.createInjector(new AbstractModule() {
-            @Override
-            protected void configure() {
-                bind(Vertx.class)
-                    .toInstance(vertx);
+            ObjectMapper defaultObjectMapper = new ObjectMapper(new MessagePackFactory());
+            defaultObjectMapper.registerModule(new InterfaceMapper("internal"));
 
-                bind(ObjectMapper.class)
-                    .toInstance(Json.mapper);
+            Injector injector = Guice.createInjector(new AbstractModule() {
+                @Override
+                protected void configure() {
+                    bind(Vertx.class)
+                        .toInstance(vertx);
 
-                install(new LocalServicesBinderModule(classpathScanner));
-                install(new RemoteServicesBinderModule(classpathScanner));
+                    bind(ObjectMapper.class)
+                        .toInstance(defaultObjectMapper);
 
-                install(new VerticleBinderModule());
-                install(new ExtensionBinderModule(classpathScanner));
-            }
+                    install(new LocalServicesBinderModule(classpathScanner));
+                    install(new RemoteServicesBinderModule(classpathScanner));
+
+                    install(new VerticleBinderModule());
+                    install(new ExtensionBinderModule(classpathScanner));
+                }
+            });
+
+            future.complete(injector);
+        }, res -> {
+            res.result().injectMembers(this);
+
+            verticleFactories.forEach(vertx::registerVerticleFactory);
+
+            vertx.executeBlocking(future -> {
+                localServiceNames
+                    .stream()
+                    .map(n -> "duna:" + n)
+                    .forEach(vertx::deployVerticle);
+
+                future.complete();
+            }, result -> {
+                System.gc();
+            });
+
+            vertx.executeBlocking(future -> {
+                ports
+                    .stream()
+                    .map(p -> "duna-port:" + p)
+                    .forEach(vertx::deployVerticle);
+            }, result -> {
+                System.gc();
+            });
+
+            startFuture.complete();
         });
-
-        injector.injectMembers(this);
-
-        verticleFactories.forEach(vertx::registerVerticleFactory);
-
-        localServiceNames
-            .stream()
-            .map(n -> "duna:" + n)
-            .forEach(vertx::deployVerticle);
-
-        ports
-            .stream()
-            .map(p -> "duna-port:" + p)
-            .forEach(vertx::deployVerticle);
-
-        System.gc();
-        startFuture.complete();
     }
 }
