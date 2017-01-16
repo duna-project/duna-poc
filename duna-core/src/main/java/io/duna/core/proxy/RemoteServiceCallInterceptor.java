@@ -10,6 +10,7 @@ package io.duna.core.proxy;
 import io.duna.core.DunaException;
 import io.duna.core.io.BufferInputStream;
 import io.duna.core.io.BufferOutputStream;
+import io.duna.core.service.ServiceException;
 import io.duna.core.util.Services;
 
 import co.paralleluniverse.fibers.SuspendExecution;
@@ -78,25 +79,34 @@ public class RemoteServiceCallInterceptor {
                 vertx.eventBus().send(serviceAddress, outputStream.getBuffer());
                 return null;
             } else {
-                Message<Buffer> response = awaitResult(
-                    h -> vertx.eventBus().send(serviceAddress, outputStream.getBuffer(), h));
+                try {
+                    Message<Buffer> response = awaitResult(
+                        h -> vertx.eventBus().send(serviceAddress, outputStream.getBuffer(), h));
 
-                if (response.body() != null && response.body().length() > 0) {
-                    BufferInputStream inputStream = new BufferInputStream(response.body());
-                    JsonParser parser = objectMapper.getFactory().createParser(inputStream);
+                    if (response.body() != null && response.body().length() > 0) {
+                        BufferInputStream inputStream = new BufferInputStream(response.body());
+                        JsonParser parser = objectMapper.getFactory().createParser(inputStream);
 
-                    final Object result = parser.readValueAs(method.getReturnType());
+                        final Object result = parser.readValueAs(method.getReturnType());
 
-                    parser.close();
-                    outputStream.close();
-                    inputStream.close();
-                    return result;
-                } else {
-                    throw new DunaException("The request resulted in an empty answer.");
+                        parser.close();
+                        outputStream.close();
+                        inputStream.close();
+                        return result;
+                    } else {
+                        throw new DunaException("The request resulted in an empty answer.");
+                    }
+                } catch (VertxException ex) {
+                    if (ex.getCause() instanceof ServiceException) {
+                        throw (ServiceException) ex.getCause();
+                    } else if (ex.getCause() instanceof DunaException) {
+                        throw (DunaException) ex.getCause();
+                    } else {
+                        throw new DunaException(ex.getCause());
+                    }
                 }
             }
-
-        } catch (IOException | VertxException ex) {
+        } catch (IOException ex) {
             throw new DunaException(ex);
         }
     }
