@@ -99,6 +99,11 @@ public class HttpJsonServiceHandler<T> implements Handler<RoutingContext> {
 
         // Parse path parameters
         event.request().params().forEach(entry -> {
+            if (!parameterIndexes.containsKey(entry.getKey())) {
+                logger.fine(() -> "Parameter " + entry.getKey() + " not mapped.");
+                return;
+            }
+
             int paramIndex = parameterIndexes.get(entry.getKey());
             logger.finer(() -> "Setting parameter " + paramIndex + " with value " + entry.getValue());
 

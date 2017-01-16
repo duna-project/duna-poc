@@ -176,14 +176,14 @@ public class HttpRouterVerticle extends SyncVerticle {
                     }
 
                     // Routing with regex currently not supported
-                    Route route = router
-                        .route(HttpMethod.valueOf(annotation.method().name()), servicePath + methodPath);
+                    HttpMethod method = HttpMethod.valueOf(annotation.method().name());
+                    Route route = router.route(method, servicePath + methodPath);
 
-                    if (annotation.method() != io.duna.http.HttpMethod.GET) route.consumes("*/json");
+//                    if (annotation.method() != io.duna.http.HttpMethod.GET) route.consumes("*/json");
 
                     route.handler(fiberHandler(handlerFactory.create(contractClass, exposedMethod, annotation.path())));
 
-                    logger.fine(() -> "Registered " + annotation.method() + " route " + annotation.path()
+                    logger.fine(() -> "Registered " + method + " route " + annotation.path()
                         + " to " + Services.getInternalServiceAddress(exposedMethod));
                 }));
     }
