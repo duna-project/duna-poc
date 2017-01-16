@@ -7,6 +7,7 @@
  */
 package io.duna.core.service.handler;
 
+import io.duna.core.DunaException;
 import io.duna.core.implementation.MethodCallDelegator;
 import io.duna.core.io.BufferInputStream;
 import io.duna.core.io.BufferOutputStream;
@@ -17,6 +18,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.primitives.Primitives;
 import com.google.inject.assistedinject.Assisted;
+import io.duna.core.service.ServiceException;
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.Message;
@@ -83,16 +85,24 @@ public class DefaultServiceHandler implements Handler<Message<Buffer>> {
                 // Don't send a response
                 new Fiber<Void>(getContextScheduler(), () -> delegator.invoke(params)).start();
             } else {
-                Object result = delegator.invoke(params);
+                try {
+                    Object result = delegator.invoke(params);
 
-                BufferOutputStream outputStream = new BufferOutputStream();
-                objectMapper
-                    .getFactory()
-                    .createGenerator(outputStream, JsonEncoding.UTF8)
-                    .writeObject(result);
+                    BufferOutputStream outputStream = new BufferOutputStream();
+                    objectMapper
+                        .getFactory()
+                        .createGenerator(outputStream, JsonEncoding.UTF8)
+                        .writeObject(result);
 
-                logger.finer(() -> "Sending result to request " + event.replyAddress());
-                event.reply(outputStream.getBuffer());
+                    logger.finer(() -> "Sending result to request " + event.replyAddress());
+                    event.reply(outputStream.getBuffer());
+                } catch (ServiceException serviceException) {
+                    event.fail(0, serviceException.getMessage());
+                } catch (DunaException internalException) {
+                    event.fail(1, internalException.getMessage());
+                } catch (Throwable otherException) {
+                    event.fail(2, otherException.getMessage());
+                }
             }
         } catch (IOException ex) {
             // TODO improve error passing

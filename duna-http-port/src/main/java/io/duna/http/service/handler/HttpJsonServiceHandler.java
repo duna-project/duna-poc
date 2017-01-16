@@ -23,6 +23,7 @@ import com.google.common.primitives.Primitives;
 import com.google.inject.assistedinject.Assisted;
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.eventbus.ReplyException;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.RoutingContext;
 import kotlinx.reflect.lite.ClassMetadata;
@@ -164,11 +165,7 @@ public class HttpJsonServiceHandler<T> implements Handler<RoutingContext> {
 
             event.vertx().eventBus().<Buffer>send(serviceAddress, requestOutputStream.getBuffer(), serviceResponse -> {
                 if (serviceResponse.failed()) {
-                    logger.log(Level.SEVERE, serviceResponse.cause(), () -> "Request to service failed.");
-
-                    event.response()
-                        .setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
-                        .end();
+                    handleReplyException(event, serviceResponse.cause());
                     return;
                 }
 
@@ -204,6 +201,30 @@ public class HttpJsonServiceHandler<T> implements Handler<RoutingContext> {
             event.response()
                 .setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
                 .end();
+        }
+    }
+
+    private void handleReplyException(RoutingContext event, Throwable cause) {
+        if (cause instanceof ReplyException) {
+            ReplyException ex = (ReplyException) cause;
+
+            Level logLevel = ex.failureCode() == 0 ? Level.FINE : Level.SEVERE;
+            logger.log(logLevel, ex, () -> "Request to service failed.");
+
+            switch (ex.failureCode()) {
+                case 0: // ServiceException
+                    event.response()
+                        .setStatusCode(HttpResponseStatus.BAD_REQUEST.code())
+                        .setChunked(true)
+                        .write(ex.getMessage())
+                        .end();
+                    break;
+                case 1:
+                case 2:
+                    event.response()
+                        .setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
+                        .end();
+            }
         }
     }
 
