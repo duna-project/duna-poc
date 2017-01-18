@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Duna Open Source Project
+ * Copyright (c) 2017 Duna Open Source Project
  * Ministério do Planejamento, Desenvolvimento de Gestão
  * República Federativa do Brasil
  *
@@ -43,6 +43,9 @@ dependencies {
   implCompile project(':duna-core')
   implCompile project(':duna-cluster')
   implCompile project(':duna-http-port')
+  implCompile project(':duna-persistence')
+  implCompile "org.hibernate:hibernate-core:5.2.6.Final"
+  implCompile "org.postgresql:postgresql:9.4.1212"
 
   mockCompile sourceSets.main.output
 //  mockCompile 'io.duna:duna-core:0.3'
@@ -71,7 +74,7 @@ task run(type: JavaExec) {
     "-javaagent:${configurations.dunaAgent.iterator().next()}",
     '-Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager'
 
-  main = 'io.duna.cluster.ClusteredMain'
+  main = 'io.duna.core.Main'
 }
 
 task runMock(type: JavaExec) {

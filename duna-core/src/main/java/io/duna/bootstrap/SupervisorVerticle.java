@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Duna Open Source Project
+ * Copyright (c) 2017 Duna Open Source Project
  * Ministério do Planejamento, Desenvolvimento de Gestão
  * República Federativa do Brasil
  *
@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import io.duna.extend.spi.BindingModule;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -27,7 +28,9 @@ import io.vertx.core.spi.VerticleFactory;
 import org.msgpack.jackson.dataformat.MessagePackFactory;
 
 import javax.inject.Inject;
+import java.util.ServiceLoader;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
@@ -54,6 +57,8 @@ public class SupervisorVerticle extends AbstractVerticle {
             ObjectMapper defaultObjectMapper = new ObjectMapper(new MessagePackFactory());
             defaultObjectMapper.registerModule(new InterfaceMapper("internal"));
 
+            final ServiceLoader<BindingModule> serviceLoader = ServiceLoader.load(BindingModule.class);
+
             Injector injector = Guice.createInjector(new AbstractModule() {
                 @Override
                 protected void configure() {
@@ -68,11 +73,20 @@ public class SupervisorVerticle extends AbstractVerticle {
 
                     install(new VerticleBinderModule());
                     install(new ExtensionBinderModule(classpathScanner));
+
+                    for (BindingModule module : serviceLoader) {
+                        install(module);
+                    }
                 }
             });
 
             future.complete(injector);
         }, res -> {
+            if (res.failed() || res.result() == null) {
+                logger.log(Level.SEVERE, res.cause(), () -> "Error while creating injector");
+                return;
+            }
+
             res.result().injectMembers(this);
 
             verticleFactories.forEach(vertx::registerVerticleFactory);

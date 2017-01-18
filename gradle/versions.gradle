@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Duna Open Source Project
+ * Copyright (c) 2017 Duna Open Source Project
  * Ministério do Planejamento, Desenvolvimento de Gestão
  * República Federativa do Brasil
  *
@@ -12,8 +12,10 @@ ext.versions = [
   fastClasspathScanner: '2.0.9',
   groovy: '2.4.7',
   guice: '4.1.0',
+  hibernate: '5.2.6.Final',
   ignite: '1.7.0',
   jetbrainsAnnotations: '15.0',
+  jinq: '1.8.15',
   junit: '4.12',
   kotlin: '1.0.5-2',
   log4j: '2.7',

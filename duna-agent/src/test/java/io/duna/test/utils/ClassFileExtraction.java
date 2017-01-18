@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Duna Open Source Project
+ * Copyright (c) 2017 Duna Open Source Project
  * Ministério do Planejamento, Desenvolvimento de Gestão
  * República Federativa do Brasil
  *
@@ -26,11 +26,6 @@ import java.util.Map;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-/*
- * Code copied from the ByteBuddy project.
- * Copyright 2016 Raphael Winterhalter
- * Licensed under Apache License 2.0
- */
 public class ClassFileExtraction {
 
     private static final int CA = 0xCA, FE = 0xFE, BA = 0xBA, BE = 0xBE;

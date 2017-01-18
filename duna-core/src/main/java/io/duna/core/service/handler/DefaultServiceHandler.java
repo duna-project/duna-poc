@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Duna Open Source Project
+ * Copyright (c) 2017 Duna Open Source Project
  * Ministério do Planejamento, Desenvolvimento de Gestão
  * República Federativa do Brasil
  *
@@ -97,11 +97,14 @@ public class DefaultServiceHandler implements Handler<Message<Buffer>> {
                     logger.finer(() -> "Sending result to request " + event.replyAddress());
                     event.reply(outputStream.getBuffer());
                 } catch (ServiceException serviceException) {
-                    event.fail(0, serviceException.getMessage());
+                    logger.log(Level.INFO, serviceException, () -> "Service error:");
+                    event.fail(0, serviceException.toString());
                 } catch (DunaException internalException) {
-                    event.fail(1, internalException.getMessage());
+                    logger.log(Level.SEVERE, internalException, () -> "Internal error:");
+                    event.fail(1, internalException.toString());
                 } catch (Throwable otherException) {
-                    event.fail(2, otherException.getMessage());
+                    logger.log(Level.SEVERE, otherException, () -> "Internal error:");
+                    event.fail(2, otherException.toString());
                 }
             }
         } catch (IOException ex) {
