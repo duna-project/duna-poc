@@ -48,16 +48,21 @@ public class PersistenceUtil {
         List<? extends Config> dataSourceConfigs = config.getConfigList("duna.persistence.data-sources");
 
         for (Config dataSourceConfig : dataSourceConfigs) {
-            if (!dataSourceConfig.hasPath("connection-url")
-                || !dataSourceConfig.hasPath("name")) {
-                logger.severe("Data source isn't configured properly: " +
-                    "'connection-url' and 'name' configurations are mandatory.");
+            if (!dataSourceConfig.hasPath("name")) {
+                logger.severe("Data source isn't configured properly: a name must be provided.");
                 continue;
             }
 
             if (!dataSourceConfig.hasPath("jpa-properties.provider-class-name")) {
                 logger.severe("A JPA persistence provider class name must be specified in " +
                     "'jpa-properties.provider-class-name'.");
+                continue;
+            }
+
+            if (dataSourceConfig.hasPath("ds-properties.data-source-class-name") &&
+                dataSourceConfig.hasPath("connection-url")) {
+                logger.severe("'connection-url' and 'ds-properties.data-source-class-name' "
+                    + "configurations can't be mixed.");
                 continue;
             }
 
@@ -68,11 +73,40 @@ public class PersistenceUtil {
                     .entrySet()
                     .forEach(entry -> properties.setProperty(
                         CaseFormat.LOWER_HYPHEN.to(CaseFormat.LOWER_CAMEL, entry.getKey()),
-                        entry.getValue().toString()));
+                        entry.getValue().unwrapped().toString()));
+
+                if (dataSourceConfig.hasPath("ds-properties.data-source-class-name")) {
+                    if (dataSourceConfig.hasPath("username")) {
+                        properties.setProperty("dataSource.user", dataSourceConfig.getString("username"));
+                    }
+
+                    if (dataSourceConfig.hasPath("password")) {
+                        properties.setProperty("dataSource.password",
+                            dataSourceConfig.getString("password"));
+                    }
+
+                    if (dataSourceConfig.hasPath("database")) {
+                        properties.setProperty("dataSource.databaseName",
+                            dataSourceConfig.getString("database"));
+                    }
+
+                    if (dataSourceConfig.hasPath("server")) {
+                        properties.setProperty("dataSource.serverName",
+                            dataSourceConfig.getString("server"));
+                    }
+
+                    if (dataSourceConfig.hasPath("port")) {
+                        properties.setProperty("dataSource.port",
+                            dataSourceConfig.getString("port"));
+                    }
+                }
             }
 
             HikariConfig hikariConfig = new HikariConfig(properties);
-            hikariConfig.setJdbcUrl(dataSourceConfig.getString("connection-url"));
+
+            if (dataSourceConfig.hasPath("connection-url")) {
+                hikariConfig.setJdbcUrl(dataSourceConfig.getString("connection-url"));
+            }
 
             if (dataSourceConfig.hasPath("username")) {
                 hikariConfig.setUsername(dataSourceConfig.getString("username"));
@@ -86,27 +120,35 @@ public class PersistenceUtil {
 
             try {
                 dataSource.setLogWriter(IoBuilder
-                    .forLogger(dataSourceConfig.getString("name"))
+                    .forLogger()
                     .setLevel(Level.DEBUG)
                     .buildPrintWriter());
-            } catch (SQLException e) {
-                logger.log(WARNING, e,
-                    () -> "Could'nt setup a logger for data source " + dataSourceConfig.getString("name"));
+            } catch (SQLException ignored) {
+                logger.warning(() -> "Could'nt setup a logger for data source "
+                    + dataSourceConfig.getString("name"));
             }
 
             Config jpaConfig = dataSourceConfig.getConfig("jpa-properties");
 
             ContainerPersistenceUnitInfo persistenceUnitInfo = new ContainerPersistenceUnitInfo();
 
-            persistenceUnitInfo.setPersistenceUnitName(jpaConfig.getString("name"));
+            persistenceUnitInfo.setPersistenceUnitName(dataSourceConfig.getString("name"));
             persistenceUnitInfo.setPersistenceUnitTransactionType(PersistenceUnitTransactionType.RESOURCE_LOCAL);
             persistenceUnitInfo.setExcludeUnlistedClasses(false);
             persistenceUnitInfo.setNonJtaDataSource(dataSource);
-            persistenceUnitInfo.setPersistenceProviderClassName(jpaConfig.getString("provider"));
             persistenceUnitInfo.setSharedCacheMode(SharedCacheMode.DISABLE_SELECTIVE);
             persistenceUnitInfo.setManagedClassNames(entityClasses);
-            persistenceUnitInfo.setPersistenceProviderClassName(
-                jpaConfig.getString("provider-class-name"));
+            persistenceUnitInfo.setPersistenceProviderClassName(jpaConfig.getString("provider-class-name"));
+
+            if (jpaConfig.hasPath("other-properties")) {
+                Properties otherProperties = new Properties();
+                jpaConfig.getConfig("other-properties")
+                    .entrySet()
+                    .forEach(entry -> otherProperties.setProperty(
+                        entry.getKey(), entry.getValue().unwrapped().toString()
+                    ));
+                persistenceUnitInfo.setProperties(otherProperties);
+            }
 
             result.add(persistenceUnitInfo);
         }
