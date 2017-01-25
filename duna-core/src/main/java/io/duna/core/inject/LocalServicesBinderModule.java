@@ -7,27 +7,23 @@
  */
 package io.duna.core.inject;
 
-import io.duna.core.context.ClasspathScanner;
-import io.duna.core.service.LocalServices;
-import io.duna.core.util.Services;
-
 import com.google.inject.AbstractModule;
 import com.google.inject.UnsafeTypeLiteral;
 import com.google.inject.multibindings.Multibinder;
+import io.duna.core.context.ClasspathScanner;
+import io.duna.core.service.LocalServices;
+import io.duna.core.util.Services;
 
 import java.lang.annotation.Annotation;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Modifier;
 import java.util.Objects;
 import java.util.logging.Level;
-import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 public class LocalServicesBinderModule extends AbstractModule {
 
-    private static final Logger logger = LogManager
-        .getLogManager()
-        .getLogger(LocalServicesBinderModule.class.getName());
+    private static final Logger logger = Logger.getLogger(LocalServicesBinderModule.class.getName());
 
     private final WeakReference<ClasspathScanner> classpathScanner;
 

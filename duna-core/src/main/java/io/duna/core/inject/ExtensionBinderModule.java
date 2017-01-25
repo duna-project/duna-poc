@@ -19,9 +19,7 @@ import java.util.logging.Logger;
 
 public class ExtensionBinderModule extends AbstractModule {
 
-    private static final Logger logger = LogManager
-        .getLogManager()
-        .getLogger(ExtensionBinderModule.class.getName());
+    private static final Logger logger = Logger.getLogger(ExtensionBinderModule.class.getName());
 
     private final WeakReference<ClasspathScanner> classpathScanner;
 
