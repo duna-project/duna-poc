@@ -16,13 +16,11 @@ import com.typesafe.config.ConfigValue;
 
 import javax.inject.Inject;
 import java.lang.reflect.Modifier;
-import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 public class InterfaceMapper extends SimpleModule {
 
-    private static final Logger logger = LogManager.getLogManager()
-        .getLogger(InterfaceMapper.class.getName());
+    private static final Logger logger = Logger.getLogger(InterfaceMapper.class.getName());
 
     @Inject
     public InterfaceMapper(String name) {

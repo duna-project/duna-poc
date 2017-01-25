@@ -20,7 +20,6 @@ import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import java.lang.annotation.Annotation;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
@@ -30,8 +29,7 @@ public class ServiceProxyFactory {
 
     private static final AtomicLong proxyCount = new AtomicLong(0);
 
-    private static final Logger logger = LogManager.getLogManager()
-        .getLogger(ServiceProxyFactory.class.getName());
+    private static final Logger logger = Logger.getLogger(ServiceProxyFactory.class.getName());
 
     public static Class<?> loadForContract(Class<?> contractClass) {
         return loadForContract(contractClass, Default.class);
