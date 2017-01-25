@@ -22,7 +22,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * @see co.paralleluniverse.fibers.Suspendable
  * @author <a href="mailto:ceduardo.melo@gmail.com">Carlos Eduardo Melo</a>
  */
-public class SuspendableMethodsTransformer implements AgentBuilder.Transformer {
+public class SuspendableInterfaceMethodsTransformer implements AgentBuilder.Transformer {
 
     @Override
     public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,

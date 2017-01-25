@@ -9,7 +9,7 @@ package io.duna.agent;
 
 import io.duna.core.service.Contract;
 import io.duna.instrument.AgentInstrumentationListener;
-import io.duna.instrument.SuspendableMethodsTransformer;
+import io.duna.instrument.SuspendableInterfaceMethodsTransformer;
 
 import net.bytebuddy.agent.builder.AgentBuilder;
 
@@ -53,7 +53,7 @@ public class DunaJavaAgent {
             .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
             .with(new AgentInstrumentationListener())
             .type(isAnnotatedWith(Contract.class).and(isInterface().or(isAbstract())))
-            .transform(new SuspendableMethodsTransformer())
+            .transform(new SuspendableInterfaceMethodsTransformer())
             .installOn(instrumentation);
 
         active = true;

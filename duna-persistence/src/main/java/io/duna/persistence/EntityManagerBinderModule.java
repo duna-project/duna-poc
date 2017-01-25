@@ -11,31 +11,22 @@ package io.duna.persistence;
 import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
 import io.duna.extend.spi.BindingModule;
-import io.duna.persistence.jinq.JinqJpaStreamProvider;
-import org.jinq.jpa.JinqJPAStreamProvider;
+import io.duna.persistence.util.PersistenceUtil;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
 import javax.persistence.PersistenceException;
-import javax.xml.namespace.QName;
-import javax.xml.stream.XMLEventReader;
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.events.StartElement;
-import javax.xml.stream.events.XMLEvent;
+import javax.persistence.spi.PersistenceProvider;
+import javax.persistence.spi.PersistenceUnitInfo;
 import java.io.InputStream;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
-import java.util.logging.LogManager;
 import java.util.logging.Logger;
-
-import static javax.xml.stream.XMLStreamConstants.START_ELEMENT;
 
 public class EntityManagerBinderModule extends AbstractModule implements BindingModule {
 
-    private final Logger logger = LogManager.getLogManager().getLogger(EntityManagerBinderModule.class.getName());
+    private final Logger logger = Logger.getLogger(EntityManagerBinderModule.class.getName());
 
     @Override
     protected void configure() {
@@ -48,17 +39,32 @@ public class EntityManagerBinderModule extends AbstractModule implements Binding
             return;
         }
 
-        List<String> persistenceUnitNames = parsePersistenceUnitNames(persistenceXmlStream);
+        List<PersistenceUnitInfo> persistenceUnitInfos = PersistenceUtil.getPersistenceUnits();
 
-        if (persistenceUnitNames.isEmpty())
-            logger.warning(() -> "No persistence units found in persistence.xml");
+        if (persistenceUnitInfos.isEmpty())
+            logger.warning(() -> "No data sources configured.");
 
         boolean firstDeclaredPersistenceUnit = true;
-        for (String persistenceUnit : persistenceUnitNames) {
+        for (PersistenceUnitInfo persistenceUnitInfo : persistenceUnitInfos) {
             try {
-                logger.fine(() -> "Binding entity manager for " + persistenceUnit);
+                logger.fine(() -> "Binding entity manager for " + persistenceUnitInfo.getPersistenceUnitName());
 
-                EntityManagerFactory entityManagerFactory = Persistence.createEntityManagerFactory(persistenceUnit);
+                PersistenceProvider provider;
+
+                try {
+                    Class<?> providerClass = Class.forName(persistenceUnitInfo.getPersistenceProviderClassName());
+                    provider = (PersistenceProvider) providerClass.newInstance();
+                } catch (ClassNotFoundException e) {
+                    logger.severe("Persistence provider " + persistenceUnitInfo.getPersistenceProviderClassName()
+                        + " not found.");
+                    continue;
+                } catch (IllegalAccessException | InstantiationException ex) {
+                    logger.log(Level.SEVERE, ex, () -> "Error while trying to instantiate the persistence provider.");
+                    continue;
+                }
+
+                EntityManagerFactory entityManagerFactory = provider
+                    .createContainerEntityManagerFactory(persistenceUnitInfo, Collections.emptyMap());
 
                 if (firstDeclaredPersistenceUnit) {
                     firstDeclaredPersistenceUnit = false;
@@ -71,11 +77,11 @@ public class EntityManagerBinderModule extends AbstractModule implements Binding
                 }
 
                 bind(EntityManagerFactory.class)
-                    .annotatedWith(Names.named(persistenceUnit))
+                    .annotatedWith(Names.named(persistenceUnitInfo.getPersistenceUnitName()))
                     .toInstance(entityManagerFactory);
 
                 bind(EntityManager.class)
-                    .annotatedWith(Names.named(persistenceUnit))
+                    .annotatedWith(Names.named(persistenceUnitInfo.getPersistenceUnitName()))
                     .toProvider(entityManagerFactory::createEntityManager);
             } catch (PersistenceException exception) {
                 logger.log(Level.SEVERE, exception, () -> "Error while creating entity manager factory");
@@ -84,34 +90,5 @@ public class EntityManagerBinderModule extends AbstractModule implements Binding
         }
 
         install(new StreamProviderBinderModule());
-    }
-
-    List<String> parsePersistenceUnitNames(InputStream persistenceXmlStream) {
-        List<String> persistenceUnitNames = new ArrayList<>();
-
-        try {
-            XMLInputFactory xmlInputFactory = XMLInputFactory.newFactory();
-            XMLEventReader eventReader = xmlInputFactory.createXMLEventReader(persistenceXmlStream);
-
-            while (eventReader.hasNext()) {
-                XMLEvent event = eventReader.nextEvent();
-
-                if (event.getEventType() == START_ELEMENT) {
-                    StartElement element = event.asStartElement();
-
-                    if (!element.getName().getNamespaceURI().equals("http://xmlns.jcp.org/xml/ns/persistence") ||
-                        !element.getName().getLocalPart().equals("persistence-unit"))
-                        continue;
-
-                    persistenceUnitNames.add(element
-                        .getAttributeByName(new QName("name"))
-                        .getValue());
-                }
-            }
-        } catch (XMLStreamException xmlException) {
-            logger.log(Level.SEVERE, xmlException, () -> "Error while parsing persistence.xml");
-        }
-
-        return persistenceUnitNames;
     }
 }

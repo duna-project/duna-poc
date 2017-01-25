@@ -11,4 +11,6 @@ import org.jinq.orm.stream.JinqStream;
 
 public interface JinqStreamProvider {
     <T> JinqStream<T> get(Class<T> entityClass);
+
+    void close(JinqStream<?> stream);
 }

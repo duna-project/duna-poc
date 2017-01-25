@@ -5,8 +5,14 @@
  *
  * This file is part of the Duna Project.
  */
+package io.duna.persistence.jinq;
 
-/**
- * Created by carlos on 17/01/17.
- */
-package io.duna.persistence;
+import org.junit.Test;
+
+import javax.persistence.EntityManager;
+
+import static org.junit.Assert.*;
+
+public class JinqJpaStreamProviderTest {
+
+}

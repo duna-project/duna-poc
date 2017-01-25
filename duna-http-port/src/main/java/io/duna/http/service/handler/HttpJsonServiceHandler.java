@@ -7,6 +7,8 @@
  */
 package io.duna.http.service.handler;
 
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import io.duna.core.io.BufferInputStream;
 import io.duna.core.io.BufferOutputStream;
 import io.duna.core.util.Services;
@@ -39,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class HttpJsonServiceHandler<T> implements Handler<RoutingContext> {
 
@@ -53,6 +56,12 @@ public class HttpJsonServiceHandler<T> implements Handler<RoutingContext> {
     private final Map<String, Integer> parameterIndexes;
 
     private final Map<String, Class<?>> parameterTypes;
+
+    private final Config config = ConfigFactory.load();
+
+    private final String corsDomains = config.getStringList("duna.web.cors")
+        .stream()
+        .collect(Collectors.joining(","));
 
     @Inject
     public HttpJsonServiceHandler(@Assisted Class<?> contractClass,
@@ -185,6 +194,7 @@ public class HttpJsonServiceHandler<T> implements Handler<RoutingContext> {
 
                         event.response()
                             .putHeader("content-type", "text/json")
+                            .putHeader("access-control-allow-origin", corsDomains)
                             .end(externalObjectMapper.writeValueAsString(result));
                     } catch (IOException ex) {
                         logger.log(Level.SEVERE, ex, () -> "Error while handling request from " + event.request().remoteAddress());

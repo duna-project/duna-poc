@@ -55,7 +55,7 @@ public class SuspendableMethodTransformerTest {
             .with(AgentBuilder.TypeStrategy.Default.REBASE)
             .with(AgentBuilder.RedefinitionStrategy.DISABLED)
             .type(is(SimpleInterface.class), is(classLoader))
-                .transform(new SuspendableMethodsTransformer())
+                .transform(new SuspendableInterfaceMethodsTransformer())
             .installOnByteBuddyAgent();
 
         Class<?> iface = classLoader.loadClass(SimpleInterface.class.getName());

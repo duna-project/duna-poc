@@ -25,4 +25,8 @@ public class JinqNonQueryStreamProvider<T> implements JinqStreamProvider {
     public <V> JinqStream<V> get(Class<V> entityClass) {
         return new NonQueryJinqStream<>((Stream<V>) data);
     }
+
+    @Override
+    public void close(JinqStream<?> stream) {
+    }
 }
