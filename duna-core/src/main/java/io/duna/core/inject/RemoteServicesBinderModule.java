@@ -7,14 +7,13 @@
  */
 package io.duna.core.inject;
 
-import io.duna.core.context.ClasspathScanner;
-import io.duna.core.proxy.ServiceProxyFactory;
-
 import com.google.common.collect.Sets;
 import com.google.inject.AbstractModule;
 import com.google.inject.UnsafeTypeLiteral;
 import com.google.inject.internal.Annotations;
 import com.google.inject.spi.InjectionPoint;
+import io.duna.core.context.ClasspathScanner;
+import io.duna.core.proxy.ServiceProxyFactory;
 
 import java.lang.annotation.Annotation;
 import java.lang.ref.WeakReference;
@@ -27,14 +26,12 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
-import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class RemoteServicesBinderModule extends AbstractModule {
 
-    private static final Logger logger = LogManager
-        .getLogManager().getLogger(RemoteServicesBinderModule.class.getName());
+    private static final Logger logger = Logger.getLogger(RemoteServicesBinderModule.class.getName());
 
     private final WeakReference<ClasspathScanner> classpathScanner;
 

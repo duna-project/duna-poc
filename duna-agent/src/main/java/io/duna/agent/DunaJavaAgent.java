@@ -10,12 +10,10 @@ package io.duna.agent;
 import io.duna.core.service.Contract;
 import io.duna.instrument.AgentInstrumentationListener;
 import io.duna.instrument.SuspendableInterfaceMethodsTransformer;
-
 import net.bytebuddy.agent.builder.AgentBuilder;
 
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
-import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
@@ -27,8 +25,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  */
 public class DunaJavaAgent {
 
-    private static final Logger logger = LogManager.getLogManager()
-        .getLogger(DunaJavaAgent.class.getName());
+    private static final Logger logger = Logger.getLogger(DunaJavaAgent.class.getName());
 
     private static volatile boolean active;
 

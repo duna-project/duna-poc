@@ -7,23 +7,23 @@
  */
 package io.duna.cluster;
 
-import io.duna.bootstrap.SupervisorVerticle;
-
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import io.duna.bootstrap.SupervisorVerticle;
 import io.netty.channel.DefaultChannelId;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.spi.cluster.ClusterManager;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class ClusteredMain {
 
     public static void main(String ... args) {
-        Logger rootLogger = LogManager.getRootLogger();
-        rootLogger.info(() -> "Starting the cluster node");
+        Logger rootLogger = Logger.getAnonymousLogger();
+        rootLogger.info("Starting the cluster node");
 
         Config config = ConfigFactory.load();
         ClusterManager clusterManager = HazelcastClusterManagerFactory.create();
@@ -39,13 +39,12 @@ public class ClusteredMain {
 
         Vertx.clusteredVertx(vertxOptions, result -> {
             if (result.failed()) {
-                rootLogger.error(
-                    () -> "Error while creating clustered vert.x instance",
-                    result.cause());
+                rootLogger.log(Level.SEVERE, result.cause(),
+                    () -> "Error while creating clustered vert.x instance");
                 return;
             }
 
-            rootLogger.debug(() -> "Deploying the verticle supervisor");
+            rootLogger.fine("Deploying the verticle supervisor");
 
             DeploymentOptions supervisorOptions = new DeploymentOptions()
                 .setHa(false)

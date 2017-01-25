@@ -7,6 +7,10 @@
  */
 package io.duna.bootstrap;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import io.duna.core.context.ClasspathScanner;
 import io.duna.core.inject.ExtensionBinderModule;
 import io.duna.core.inject.LocalServicesBinderModule;
@@ -15,11 +19,6 @@ import io.duna.core.inject.VerticleBinderModule;
 import io.duna.core.service.InterfaceMapper;
 import io.duna.core.service.LocalServices;
 import io.duna.extend.Port;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import io.duna.extend.spi.BindingModule;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
@@ -31,14 +30,12 @@ import javax.inject.Inject;
 import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.logging.Level;
-import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 @SuppressWarnings("ALL")
 public class SupervisorVerticle extends AbstractVerticle {
 
-    private Logger logger = LogManager.getLogManager()
-        .getLogger(SupervisorVerticle.class.getName());
+    private Logger logger = Logger.getLogger(SupervisorVerticle.class.getName());
 
     @Inject
     private Set<VerticleFactory> verticleFactories;

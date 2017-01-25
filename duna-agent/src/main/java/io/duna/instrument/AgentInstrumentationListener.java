@@ -26,8 +26,7 @@ import java.util.logging.Logger;
  */
 public class AgentInstrumentationListener implements AgentBuilder.Listener {
 
-    private static final Logger logger = LogManager.getLogManager()
-        .getLogger(DunaJavaAgent.class.getName());
+    private static final Logger logger = Logger.getLogger(DunaJavaAgent.class.getName());
 
     @Override
     public void onTransformation(TypeDescription typeDescription,
