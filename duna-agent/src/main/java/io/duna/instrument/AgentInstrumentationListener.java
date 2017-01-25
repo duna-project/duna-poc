@@ -8,7 +8,6 @@
 package io.duna.instrument;
 
 import io.duna.agent.DunaJavaAgent;
-
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
@@ -16,7 +15,6 @@ import net.bytebuddy.utility.JavaModule;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 /**
