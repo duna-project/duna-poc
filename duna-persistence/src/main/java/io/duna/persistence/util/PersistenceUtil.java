@@ -14,14 +14,19 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import io.duna.persistence.jpa.ContainerPersistenceUnitInfo;
 import io.duna.persistence.EntityManagerBinderModule;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.io.IoBuilder;
 
 import javax.persistence.SharedCacheMode;
 import javax.persistence.spi.PersistenceUnitInfo;
 import javax.persistence.spi.PersistenceUnitTransactionType;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.logging.Logger;
+
+import static java.util.logging.Level.*;
 
 public class PersistenceUtil {
 
@@ -44,34 +49,30 @@ public class PersistenceUtil {
 
         for (Config dataSourceConfig : dataSourceConfigs) {
             if (!dataSourceConfig.hasPath("connection-url")
-                || !dataSourceConfig.hasPath("driver")
                 || !dataSourceConfig.hasPath("name")) {
                 logger.severe("Data source isn't configured properly: " +
-                    "'connection-url', 'driver' and 'name' configurations are mandatory.");
+                    "'connection-url' and 'name' configurations are mandatory.");
                 continue;
             }
 
-            if (!dataSourceConfig.hasPath("properties.provider-class-name")) {
+            if (!dataSourceConfig.hasPath("jpa-properties.provider-class-name")) {
                 logger.severe("A JPA persistence provider class name must be specified in " +
-                    "'properties.provider-class-name'.");
+                    "'jpa-properties.provider-class-name'.");
                 continue;
             }
 
             Properties properties = new Properties();
-            if (dataSourceConfig.hasPath("properties")) {
+            if (dataSourceConfig.hasPath("ds-properties")) {
                 dataSourceConfig
-                    .getConfig("properties")
+                    .getConfig("ds-properties")
                     .entrySet()
-                    .forEach(entry -> {
-                        properties.setProperty("dataSource."
-                            + CaseFormat.LOWER_CAMEL.to(CaseFormat.LOWER_HYPHEN, entry.getKey()),
-                            entry.getValue().toString());
-                    });
+                    .forEach(entry -> properties.setProperty(
+                        CaseFormat.LOWER_HYPHEN.to(CaseFormat.LOWER_CAMEL, entry.getKey()),
+                        entry.getValue().toString()));
             }
 
             HikariConfig hikariConfig = new HikariConfig(properties);
             hikariConfig.setJdbcUrl(dataSourceConfig.getString("connection-url"));
-            hikariConfig.setDataSourceClassName(dataSourceConfig.getString("driver"));
 
             if (dataSourceConfig.hasPath("username")) {
                 hikariConfig.setUsername(dataSourceConfig.getString("username"));
@@ -83,17 +84,29 @@ public class PersistenceUtil {
 
             HikariDataSource dataSource = new HikariDataSource(hikariConfig);
 
+            try {
+                dataSource.setLogWriter(IoBuilder
+                    .forLogger(dataSourceConfig.getString("name"))
+                    .setLevel(Level.DEBUG)
+                    .buildPrintWriter());
+            } catch (SQLException e) {
+                logger.log(WARNING, e,
+                    () -> "Could'nt setup a logger for data source " + dataSourceConfig.getString("name"));
+            }
+
+            Config jpaConfig = dataSourceConfig.getConfig("jpa-properties");
+
             ContainerPersistenceUnitInfo persistenceUnitInfo = new ContainerPersistenceUnitInfo();
 
-            persistenceUnitInfo.setPersistenceUnitName(dataSourceConfig.getString("name"));
+            persistenceUnitInfo.setPersistenceUnitName(jpaConfig.getString("name"));
             persistenceUnitInfo.setPersistenceUnitTransactionType(PersistenceUnitTransactionType.RESOURCE_LOCAL);
             persistenceUnitInfo.setExcludeUnlistedClasses(false);
             persistenceUnitInfo.setNonJtaDataSource(dataSource);
-            persistenceUnitInfo.setPersistenceProviderClassName(dataSourceConfig.getString("provider"));
+            persistenceUnitInfo.setPersistenceProviderClassName(jpaConfig.getString("provider"));
             persistenceUnitInfo.setSharedCacheMode(SharedCacheMode.DISABLE_SELECTIVE);
             persistenceUnitInfo.setManagedClassNames(entityClasses);
             persistenceUnitInfo.setPersistenceProviderClassName(
-                dataSourceConfig.getString("properties.provider-class-name"));
+                jpaConfig.getString("provider-class-name"));
 
             result.add(persistenceUnitInfo);
         }

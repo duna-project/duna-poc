@@ -32,13 +32,6 @@ public class EntityManagerBinderModule extends AbstractModule implements Binding
     protected void configure() {
         logger.info(() -> "Binding persistence extensions");
 
-        InputStream persistenceXmlStream = getClass().getResourceAsStream("/META-INF/persistence.xml");
-
-        if (persistenceXmlStream == null) {
-            logger.severe(() -> "No persistence.xml configuration found in the classpath.");
-            return;
-        }
-
         List<PersistenceUnitInfo> persistenceUnitInfos = PersistenceUtil.getPersistenceUnits();
 
         if (persistenceUnitInfos.isEmpty())
