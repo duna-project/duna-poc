@@ -7,26 +7,34 @@
  */
 package io.duna.persistence.jinq;
 
+import org.jinq.orm.stream.InQueryStreamSource;
 import org.jinq.orm.stream.JinqStream;
 import org.jinq.orm.stream.NonQueryJinqStream;
 
+import java.util.Map;
 import java.util.stream.Stream;
 
-public class JinqNonQueryStreamProvider<T> implements JinqStreamProvider {
+public class JinqNonQueryStreamProvider implements JinqStreamProvider, InQueryStreamSource {
 
-     private Stream<T> data;
+     private Map<Class<?>, Stream<?>> data;
 
-    public JinqNonQueryStreamProvider(Stream<T> data) {
+    public JinqNonQueryStreamProvider(Map<Class<?>, Stream<?>> data) {
         this.data = data;
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public <V> JinqStream<V> get(Class<V> entityClass) {
-        return new NonQueryJinqStream<>((Stream<V>) data);
+        return new NonQueryJinqStream<>((Stream<V>) data.get(entityClass), this);
     }
 
     @Override
     public void close(JinqStream<?> stream) {
+        stream.close();
+    }
+
+    @Override
+    public <U> JinqStream<U> stream(Class<U> entityClass) {
+        return get(entityClass);
     }
 }

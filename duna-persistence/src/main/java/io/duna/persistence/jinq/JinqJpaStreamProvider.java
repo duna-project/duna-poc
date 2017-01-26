@@ -72,8 +72,10 @@ public class JinqJpaStreamProvider implements JinqStreamProvider {
 
             EntityManager entityManager = (EntityManager) entityManagerField.get(composer);
             entityManager.close();
-        } catch (IllegalAccessException ignored) {
-            ignored.printStackTrace();
+        } catch (IllegalAccessException ex) {
+            logger.log(Level.SEVERE, ex, () -> "Error while trying to close the stream.");
+        } finally {
+            stream.close();
         }
     }
 }
