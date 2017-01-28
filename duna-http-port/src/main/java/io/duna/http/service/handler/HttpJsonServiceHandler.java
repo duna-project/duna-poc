@@ -7,8 +7,6 @@
  */
 package io.duna.http.service.handler;
 
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 import io.duna.core.io.BufferInputStream;
 import io.duna.core.io.BufferOutputStream;
 import io.duna.core.util.Services;
@@ -23,6 +21,8 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.primitives.Primitives;
 import com.google.inject.assistedinject.Assisted;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.ReplyException;
@@ -187,15 +187,41 @@ public class HttpJsonServiceHandler<T> implements Handler<RoutingContext> {
 
                 if (serviceResponse.result().body() != null && serviceResponse.result().body().length() > 0) {
                     try {
-                        BufferInputStream responseInputStream = new BufferInputStream(serviceResponse.result().body());
-                        JsonParser parser = internalObjectMapper.getFactory().createParser(responseInputStream);
+                        logger.finer(() -> "Received response from service: " + serviceAddress);
+
+                        JsonParser parser = internalObjectMapper.getFactory()
+                                                                .createParser(serviceResponse.result()
+                                                                                             .body()
+                                                                                             .getBytes());
 
                         Object result = parser.readValueAs(targetMethod.getReturnType());
 
                         event.response()
-                            .putHeader("content-type", "text/json")
-                            .putHeader("access-control-allow-origin", corsDomains)
-                            .end(externalObjectMapper.writeValueAsString(result));
+                             .putHeader("content-type", "text/json")
+                             .putHeader("access-control-allow-origin", corsDomains)
+                             .setChunked(true);
+
+                        if (result instanceof Iterable) {
+                            // Serialize iterable items individually in order to reduce memory usage
+                            event.response().write("[");
+
+                            Iterable<?> items = (Iterable<?>) result;
+                            boolean first = true;
+                            for (Object item : items) {
+                                if (first) {
+                                    event.response().write(",");
+                                    first = false;
+                                }
+
+                                event.response().write(externalObjectMapper.writeValueAsString(item));
+                            }
+
+                            event.response().write("]");
+                        } else {
+                            event.response().write(externalObjectMapper.writeValueAsString(result));
+                        }
+
+                        event.response().end();
                     } catch (IOException ex) {
                         logger.log(Level.SEVERE, ex, () -> "Error while handling request from " + event.request().remoteAddress());
                         event.response()
