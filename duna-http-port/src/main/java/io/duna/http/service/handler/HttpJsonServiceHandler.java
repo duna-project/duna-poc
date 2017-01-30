@@ -208,10 +208,10 @@ public class HttpJsonServiceHandler<T> implements Handler<RoutingContext> {
                             Iterable<?> items = (Iterable<?>) result;
                             boolean first = true;
                             for (Object item : items) {
-                                if (first) {
+                                if (!first) {
                                     event.response().write(",");
-                                    first = false;
                                 }
+                                first = false;
 
                                 event.response().write(externalObjectMapper.writeValueAsString(item));
                             }
