@@ -13,6 +13,7 @@ import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.implementation.SuperMethodCall;
+import net.bytebuddy.utility.JavaModule;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
@@ -27,7 +28,8 @@ public class SuspendableInterfaceMethodsTransformer implements AgentBuilder.Tran
     @Override
     public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
                                             TypeDescription typeDescription,
-                                            ClassLoader classLoader) {
+                                            ClassLoader classLoader,
+                                            JavaModule module) {
         return builder
             .method(isDeclaredBy(typeDescription).and(not(isDefaultMethod())))
                 .withoutCode()

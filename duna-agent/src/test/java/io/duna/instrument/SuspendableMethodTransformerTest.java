@@ -21,7 +21,6 @@ import org.junit.Test;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.reflect.Method;
 
-import static net.bytebuddy.dynamic.loading.ClassInjector.DEFAULT_PROTECTION_DOMAIN;
 import static net.bytebuddy.matcher.ElementMatchers.is;
 import static org.junit.Assert.*;
 
@@ -41,7 +40,7 @@ public class SuspendableMethodTransformerTest {
         classLoader = new ByteArrayClassLoader.ChildFirst(getClass().getClassLoader(),
             ClassFileExtraction.of(SimpleInterface.class,
                 SimpleClass.class),
-            DEFAULT_PROTECTION_DOMAIN,
+            null,
             ByteArrayClassLoader.PersistenceHandler.MANIFEST,
             PackageDefinitionStrategy.NoOp.INSTANCE);
     }

@@ -8,6 +8,7 @@
 package io.duna.instrument;
 
 import io.duna.agent.DunaJavaAgent;
+
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
@@ -30,18 +31,19 @@ public class AgentInstrumentationListener implements AgentBuilder.Listener {
     public void onTransformation(TypeDescription typeDescription,
                                  ClassLoader classLoader,
                                  JavaModule module,
+                                 boolean loaded,
                                  DynamicType dynamicType) {
         logger.fine(() -> String.format("%s will be instrumented", typeDescription));
     }
 
     @Override
-    public void onIgnored(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module) {
+    public void onIgnored(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, boolean loaded) {
         logger.finest(() -> String.format("Instrumentation ignored type %s", typeDescription));
     }
 
     @Override
     public void onError(String typeName, ClassLoader classLoader,
-                        JavaModule module, Throwable throwable) {
+                        JavaModule module, boolean loaded, Throwable throwable) {
         logger.warning(() -> String.format("Error while instrumenting %s", typeName));
         logger.fine(() -> {
             StringWriter errorWriter = new StringWriter();
@@ -52,7 +54,7 @@ public class AgentInstrumentationListener implements AgentBuilder.Listener {
     }
 
     @Override
-    public void onComplete(String typeName, ClassLoader classLoader, JavaModule module) {
+    public void onComplete(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded) {
         logger.finest(() -> String.format("Instrumentation of %s complete", typeName));
     }
 }

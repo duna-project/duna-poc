@@ -76,8 +76,9 @@ public class ServiceProxyFactory {
             .implement(contractClass)
                 .intercept(
                     MethodDelegation
-                        .to(new RemoteServiceCallInterceptor())
+                        .withDefaultConfiguration()
                         .filter(not(isDeclaredBy(Object.class)))
+                        .to(new RemoteServiceCallInterceptor())
                 )
                 .annotateMethod(suspendable)
 

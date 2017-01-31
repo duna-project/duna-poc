@@ -11,6 +11,7 @@ import io.duna.core.DunaException;
 import io.duna.core.implementation.MethodCallDelegator;
 import io.duna.core.io.BufferInputStream;
 import io.duna.core.io.BufferOutputStream;
+import io.duna.core.service.ServiceException;
 
 import co.paralleluniverse.fibers.Fiber;
 import com.fasterxml.jackson.core.JsonEncoding;
@@ -18,16 +19,17 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.primitives.Primitives;
 import com.google.inject.assistedinject.Assisted;
-import io.duna.core.service.ServiceException;
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.Message;
+import io.vertx.ext.sync.Sync;
 import net.bytebuddy.description.method.MethodDescription;
 
 import javax.inject.Inject;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -85,8 +87,25 @@ public class DefaultServiceHandler implements Handler<Message<Buffer>> {
                 // Don't send a response
                 new Fiber<Void>(getContextScheduler(), () -> delegator.invoke(params)).start();
             } else {
+                Fiber<Object> operation = new Fiber<>(Sync.getContextScheduler(), () -> delegator.invoke(params));
+
+                operation.setUncaughtExceptionHandler((t, ex) -> {
+                    logger.log(Level.SEVERE, ex, () -> "Service execution error:");
+
+                    int failureCode;
+                    if (ex instanceof ServiceException) {
+                        failureCode = 0;
+                    } else if (ex instanceof DunaException) {
+                        failureCode = 1;
+                    } else {
+                        failureCode = 2;
+                    }
+
+                    event.fail(failureCode, ex.toString());
+                });
+
                 try {
-                    Object result = delegator.invoke(params);
+                    Object result = operation.start().get();
 
                     BufferOutputStream outputStream = new BufferOutputStream();
                     objectMapper
@@ -96,15 +115,9 @@ public class DefaultServiceHandler implements Handler<Message<Buffer>> {
 
                     logger.finer(() -> "Sending result to request " + event.replyAddress());
                     event.reply(outputStream.getBuffer());
-                } catch (ServiceException serviceException) {
-                    logger.log(Level.INFO, serviceException, () -> "Service error:");
-                    event.fail(0, serviceException.toString());
-                } catch (DunaException internalException) {
-                    logger.log(Level.SEVERE, internalException, () -> "Internal error:");
-                    event.fail(1, internalException.toString());
-                } catch (Throwable otherException) {
-                    logger.log(Level.SEVERE, otherException, () -> "Internal error:");
-                    event.fail(2, otherException.toString());
+                } catch (InterruptedException ex) {
+                    logger.log(Level.SEVERE, ex, () -> "Computation interrupted:");
+                } catch (ExecutionException ignored) {
                 }
             }
         } catch (IOException ex) {

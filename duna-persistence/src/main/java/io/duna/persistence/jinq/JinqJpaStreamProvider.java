@@ -15,7 +15,9 @@ import org.jinq.orm.stream.JinqStream;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -77,5 +79,13 @@ public class JinqJpaStreamProvider implements JinqStreamProvider {
         } finally {
             stream.close();
         }
+    }
+
+    public void registerCustomTupleStaticBuilder(Method m, Method ... tupleIndexReaders) {
+        jpaStreamProvider.registerCustomTupleStaticBuilder(m, tupleIndexReaders);
+    }
+
+    public void registerCustomTupleConstructor(Constructor<?> m, Method ... tupleIndexReaders) {
+        jpaStreamProvider.registerCustomTupleConstructor(m, tupleIndexReaders);
     }
 }

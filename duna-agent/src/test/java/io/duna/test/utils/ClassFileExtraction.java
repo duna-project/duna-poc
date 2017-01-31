@@ -1,15 +1,15 @@
 /*
- * Copyright (c) 2017 Duna Open Source Project
- * Ministério do Planejamento, Desenvolvimento de Gestão
- * República Federativa do Brasil
- *
- * This file is part of the Duna Project.
+ * Copyright (c) 2017 Rafael Einterhalter
+ * File extracted from Byte-Buddy sources.
  */
 package io.duna.test.utils;
 
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.description.field.FieldList;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
@@ -38,13 +38,15 @@ public class ClassFileExtraction {
         return result;
     }
 
-    private static byte[] extract(Class<?> type, AsmVisitorWrapper asmVisitorWrapper) throws IOException {
+    public static byte[] extract(Class<?> type, AsmVisitorWrapper asmVisitorWrapper) throws IOException {
         ClassReader classReader = new ClassReader(type.getName());
         ClassWriter classWriter = new ClassWriter(classReader, AsmVisitorWrapper.NO_FLAGS);
         classReader.accept(asmVisitorWrapper.wrap(new TypeDescription.ForLoadedType(type),
             classWriter,
             new IllegalContext(),
             TypePool.Empty.INSTANCE,
+            new FieldList.Empty<FieldDescription.InDefinedShape>(),
+            new MethodList.Empty<MethodDescription>(),
             AsmVisitorWrapper.NO_FLAGS,
             AsmVisitorWrapper.NO_FLAGS), AsmVisitorWrapper.NO_FLAGS);
         return classWriter.toByteArray();
@@ -87,6 +89,21 @@ public class ClassFileExtraction {
 
         @Override
         public ClassFileVersion getClassFileVersion() {
+            throw new AssertionError("Did not expect method call");
+        }
+
+        @Override
+        public MethodDescription.InDefinedShape registerAccessorFor(Implementation.SpecialMethodInvocation specialMethodInvocation, AccessType accessType) {
+            throw new AssertionError("Did not expect method call");
+        }
+
+        @Override
+        public MethodDescription.InDefinedShape registerGetterFor(FieldDescription fieldDescription, AccessType accessType) {
+            throw new AssertionError("Did not expect method call");
+        }
+
+        @Override
+        public MethodDescription.InDefinedShape registerSetterFor(FieldDescription fieldDescription, AccessType accessType) {
             throw new AssertionError("Did not expect method call");
         }
     }

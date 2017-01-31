@@ -5,14 +5,12 @@
  *
  * This file is part of the Duna Project.
  */
-package io.duna.persistence;
+package io.duna.core.service;
 
-import org.junit.Test;
+import java.lang.annotation.*;
 
-
-public class EntityManagerBinderModuleTest {
-    @Test
-    public void testParsePersistenceUnitNames() throws Exception {
-    }
-
+@Documented
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface LongOperation {
 }
