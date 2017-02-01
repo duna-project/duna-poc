@@ -7,6 +7,9 @@
  */
 package io.duna.http.service.handler;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import io.duna.core.DunaException;
 import io.duna.core.io.BufferInputStream;
 import io.duna.core.io.BufferOutputStream;
 import io.duna.core.util.Services;
@@ -43,7 +46,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-public class HttpJsonServiceHandler<T> implements Handler<RoutingContext> {
+public class HttpJsonServiceHandler implements Handler<RoutingContext> {
 
     private final Logger logger;
 
@@ -130,31 +133,46 @@ public class HttpJsonServiceHandler<T> implements Handler<RoutingContext> {
         });
 
         // Parse request body to get the remaining parameterIndexes
-        if (event.getBody() != null) {
-            try {
-                BufferInputStream inputStream = new BufferInputStream(event.getBody());
-                JsonParser parser = externalObjectMapper.getFactory().createParser(inputStream);
-
-                while (parser.hasToken(JsonToken.FIELD_NAME)) {
-                    String paramName = parser.nextFieldName();
-                    Class<?> paramType = parameterTypes.get(paramName);
-                    int paramIndex = parameterIndexes.get(paramName);
-                    Object paramValue = parser.readValueAs(paramType);
-
-                    logger.finer(() -> "Setting parameter " + paramIndex + " with value " + paramValue);
-
-                    parameterValues[paramIndex] = paramValue;
-                }
-            } catch (IOException ex) {
-                logger.log(Level.SEVERE, ex, () -> "Error while handling request from " + event.request().remoteAddress());
-                event.response()
-                    .setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
-                    .end();
-                return;
-            }
+        if (event.getBody() != null
+            && event.request().getHeader("content-type").equals("application/json")) {
+            parseBodyParameters(event, parameterValues);
         }
 
         sendRequestToService(event, parameterValues);
+    }
+
+    private Object[] parseBodyParameters(RoutingContext event, Object[] parameterValues) {
+        try {
+            logger.fine(() -> "Processing request body " + event.getBody());
+
+            BufferInputStream inputStream = new BufferInputStream(event.getBody());
+            JsonParser parser = externalObjectMapper.getFactory().createParser(inputStream);
+
+            JsonNode parametersTree = parser.readValueAsTree();
+
+            parametersTree.fields().forEachRemaining(e -> {
+                Class<?> paramType = parameterTypes.get(e.getKey());
+                int paramIndex = parameterIndexes.get(e.getKey());
+
+                try {
+                    Object paramValue = externalObjectMapper.treeToValue(e.getValue(), paramType);
+
+                    logger.finer(() -> "Setting parameter " + paramIndex + " with value " + paramValue);
+                    parameterValues[paramIndex] = paramValue;
+                } catch (JsonProcessingException ex) {
+                    logger.log(Level.SEVERE, ex, () -> "Error while parsing the parameters tree.");
+                }
+            });
+
+            return parameterValues;
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, ex, () -> "Error while handling request from "
+                + event.request().remoteAddress());
+            event.response()
+                .setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
+                .end();
+            throw new DunaException("Error while parsing parameter values");
+        }
     }
 
     @Suspendable
@@ -316,8 +334,8 @@ public class HttpJsonServiceHandler<T> implements Handler<RoutingContext> {
     }
 
     public interface BinderFactory {
-        HttpJsonServiceHandler<Object> create(Class<?> contractClass,
-                                              Method method,
-                                              String path);
+        HttpJsonServiceHandler create(Class<?> contractClass,
+                                      Method method,
+                                      String path);
     }
 }

@@ -16,7 +16,7 @@ configure (allprojects) {
   apply plugin: 'eclipse'
 
   group 'io.duna'
-  version '0.4.1'
+  version '0.4.2'
 
   repositories {
     mavenLocal()

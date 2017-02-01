@@ -9,13 +9,13 @@ package io.duna.persistence;
 
 import com.google.inject.AbstractModule;
 import io.duna.extend.spi.BindingModule;
-import io.duna.persistence.jinq.JinqJpaStreamProvider;
-import io.duna.persistence.jinq.JinqStreamProvider;
+import io.duna.persistence.stream.QueryStreamProvider;
+import org.jinq.jpa.JPAQueryStreamProvider;
 
 public class StreamProviderBinderModule extends AbstractModule implements BindingModule {
     @Override
     protected void configure() {
-        bind(JinqStreamProvider.class)
-            .to(JinqJpaStreamProvider.class);
+        bind(QueryStreamProvider.class)
+            .to(JPAQueryStreamProvider.class);
     }
 }
