@@ -134,7 +134,7 @@ public class HttpJsonServiceHandler implements Handler<RoutingContext> {
 
         // Parse request body to get the remaining parameterIndexes
         if (event.getBody() != null
-            && event.request().getHeader("content-type").equals("application/json")) {
+            && "application/json".equals(event.request().getHeader("content-type"))) {
             parseBodyParameters(event, parameterValues);
         }
 
