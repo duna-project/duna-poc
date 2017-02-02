@@ -16,9 +16,9 @@ import org.jinq.tuples.*;
 
 import java.util.function.BiConsumer;
 
-public class PersistableJPAQueryStream<T> extends QueryJinqStream<T> implements JPAQueryStream<T> {
+public class PersistableJPAQueryStream<T> extends QueryJPAJinqStream<T> implements JPAQueryStream<T> {
 
-    final JPAQueryComposer<T> jpaComposer;
+    private final JPAQueryComposer<T> jpaComposer;
 
     public PersistableJPAQueryStream(QueryComposer<T> query) {
         super(query);
