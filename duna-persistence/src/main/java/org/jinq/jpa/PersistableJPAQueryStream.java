@@ -305,6 +305,11 @@ public class PersistableJPAQueryStream<T> extends QueryJinqStream<T> implements 
     }
 
     @Override
+    public void rollback() {
+        jpaComposer.em.getTransaction().rollback();
+    }
+
+    @Override
     public <V> V merge(V entity) {
         try {
             return jpaComposer.em.merge(entity);

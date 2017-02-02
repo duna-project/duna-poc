@@ -30,6 +30,8 @@ public interface QueryStream<T> extends JinqStream<T> {
 
     default void commit() {}
 
+    default void rollback() {}
+
     void remove(Object entity);
 
     void persist(Object entity);
