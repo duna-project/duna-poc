@@ -295,11 +295,21 @@ public class PersistableJPAQueryStream<T> extends QueryJinqStream<T> implements 
     }
 
     @Override
+    public void begin() {
+        jpaComposer.em.getTransaction().begin();
+    }
+
+    @Override
+    public void commit() {
+        jpaComposer.em.getTransaction().commit();
+    }
+
+    @Override
     public <V> V merge(V entity) {
         try {
             return jpaComposer.em.merge(entity);
         } catch (IllegalArgumentException ex) {
-            jpaComposer.em.persist(entity);
+            ex.printStackTrace();
         }
 
         return entity;
@@ -308,6 +318,11 @@ public class PersistableJPAQueryStream<T> extends QueryJinqStream<T> implements 
     @Override
     public void merge() {
         this.forEach(this::merge);
+    }
+
+    @Override
+    public void flush() {
+        jpaComposer.em.flush();
     }
 
     @Override

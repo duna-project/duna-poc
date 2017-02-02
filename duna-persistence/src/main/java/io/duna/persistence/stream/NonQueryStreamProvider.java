@@ -12,6 +12,7 @@ import org.jinq.orm.stream.InQueryStreamSource;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 
 public class NonQueryStreamProvider implements QueryStreamProvider, InQueryStreamSource {
 
@@ -29,7 +30,7 @@ public class NonQueryStreamProvider implements QueryStreamProvider, InQueryStrea
 
     @Override
     public <T> QueryStream<T> stream(Class<T> entityClass) {
-        return null;
+        return new NonQueryStream<T>((Stream<T>) data.get(entityClass).stream(), this);
     }
 
     @SuppressWarnings("unchecked")

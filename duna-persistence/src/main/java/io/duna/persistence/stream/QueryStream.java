@@ -24,6 +24,12 @@ public interface QueryStream<T> extends JinqStream<T> {
         this.forEach(this::merge);
     }
 
+    default void flush() {}
+
+    default void begin() {}
+
+    default void commit() {}
+
     void remove(Object entity);
 
     void persist(Object entity);
