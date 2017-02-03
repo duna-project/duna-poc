@@ -339,4 +339,13 @@ public class PersistableJPAQueryStream<T> extends QueryJPAJinqStream<T> implemen
     public void persist(Object entity) {
         jpaComposer.em.persist(entity);
     }
+
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
+
+        if (jpaComposer.em.isOpen()) {
+            jpaComposer.em.close();
+        }
+    }
 }
