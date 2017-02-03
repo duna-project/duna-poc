@@ -14,9 +14,11 @@ import org.jinq.orm.stream.JinqStream;
 import org.jinq.orm.stream.QueryJinqStream;
 import org.jinq.tuples.*;
 
-import java.util.function.BiConsumer;
+import java.util.logging.Logger;
 
 public class PersistableJPAQueryStream<T> extends QueryJPAJinqStream<T> implements JPAQueryStream<T> {
+
+    private static final Logger logger = Logger.getLogger(PersistableJPAQueryStream.class.getName());
 
     private final JPAQueryComposer<T> jpaComposer;
 
@@ -345,6 +347,7 @@ public class PersistableJPAQueryStream<T> extends QueryJPAJinqStream<T> implemen
         super.finalize();
 
         if (jpaComposer.em.isOpen()) {
+            logger.warning("Resource leak: a JPA stream wasn't closed properly.");
             jpaComposer.em.close();
         }
     }
