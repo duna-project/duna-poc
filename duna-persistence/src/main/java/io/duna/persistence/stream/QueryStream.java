@@ -187,6 +187,9 @@ public interface QueryStream<T> extends JinqStream<T> {
     @Override
     QueryStream<T> distinct();
 
+    @Override
+    QueryStream<T> setHint(String name, Object value);
+
     default void forEach(BiConsumer<? super T, QueryStream<T>> action) {
         this.forEach(t -> action.accept(t, this));
     }
