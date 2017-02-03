@@ -120,7 +120,7 @@ public class PersistenceUtil {
 
             try {
                 dataSource.setLogWriter(IoBuilder
-                    .forLogger()
+                    .forLogger(PersistenceUtil.class)
                     .setLevel(Level.DEBUG)
                     .buildPrintWriter());
             } catch (SQLException ignored) {
