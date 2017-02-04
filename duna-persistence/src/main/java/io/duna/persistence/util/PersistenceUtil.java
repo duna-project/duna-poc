@@ -7,13 +7,14 @@
  */
 package io.duna.persistence.util;
 
+import io.duna.persistence.EntityManagerBinderModule;
+import io.duna.persistence.jpa.ContainerPersistenceUnitInfo;
+
 import com.google.common.base.CaseFormat;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import io.duna.persistence.jpa.ContainerPersistenceUnitInfo;
-import io.duna.persistence.EntityManagerBinderModule;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.io.IoBuilder;
 
@@ -25,8 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.logging.Logger;
-
-import static java.util.logging.Level.*;
 
 public class PersistenceUtil {
 
@@ -114,6 +113,10 @@ public class PersistenceUtil {
 
             if (dataSourceConfig.hasPath("password")) {
                 hikariConfig.setPassword(dataSourceConfig.getString("password"));
+            }
+
+            if (dataSourceConfig.hasPath("ds-properties.pool-size")) {
+                hikariConfig.setMaximumPoolSize(dataSourceConfig.getInt("ds-properties.pool-size"));
             }
 
             HikariDataSource dataSource = new HikariDataSource(hikariConfig);
