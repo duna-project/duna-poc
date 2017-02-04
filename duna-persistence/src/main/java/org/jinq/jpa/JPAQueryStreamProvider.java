@@ -10,6 +10,7 @@ package org.jinq.jpa;
 import io.duna.persistence.jpa.JPAQueryStream;
 import io.duna.persistence.stream.QueryStream;
 import io.duna.persistence.stream.QueryStreamProvider;
+
 import org.jinq.jpa.jpqlquery.JPQLQuery;
 import org.jinq.orm.stream.InQueryStreamSource;
 import org.jinq.orm.stream.JinqStream;
@@ -20,14 +21,18 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.Transient;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class JPAQueryStreamProvider extends JinqJPAStreamProvider implements QueryStreamProvider {
+
+    private final Map<EntityManager, AtomicInteger> references;
 
     private final EntityManagerFactory entityManagerFactory;
 
@@ -39,6 +44,7 @@ public class JPAQueryStreamProvider extends JinqJPAStreamProvider implements Que
 
         this.entityManagerFactory = factory;
         this.logger = logger;
+        this.references = new ConcurrentHashMap<>();
     }
 
     @Override

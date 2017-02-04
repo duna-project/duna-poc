@@ -8,6 +8,7 @@
 package org.jinq.jpa;
 
 import io.duna.persistence.jpa.JPAQueryStream;
+
 import org.jinq.orm.internal.QueryComposer;
 import org.jinq.orm.stream.InQueryStreamSource;
 import org.jinq.orm.stream.JinqStream;
@@ -340,15 +341,5 @@ public class PersistableJPAQueryStream<T> extends QueryJPAJinqStream<T> implemen
     @Override
     public void persist(Object entity) {
         jpaComposer.em.persist(entity);
-    }
-
-    @Override
-    protected void finalize() throws Throwable {
-        super.finalize();
-
-        if (jpaComposer.em.isOpen()) {
-            logger.warning("Resource leak: a JPA stream wasn't closed properly.");
-            jpaComposer.em.close();
-        }
     }
 }
