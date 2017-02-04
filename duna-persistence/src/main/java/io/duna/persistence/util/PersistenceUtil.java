@@ -115,10 +115,6 @@ public class PersistenceUtil {
                 hikariConfig.setPassword(dataSourceConfig.getString("password"));
             }
 
-            if (dataSourceConfig.hasPath("ds-properties.pool-size")) {
-                hikariConfig.setMaximumPoolSize(dataSourceConfig.getInt("ds-properties.pool-size"));
-            }
-
             HikariDataSource dataSource = new HikariDataSource(hikariConfig);
 
             try {
