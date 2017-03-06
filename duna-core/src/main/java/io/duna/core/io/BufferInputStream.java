@@ -46,7 +46,7 @@ public class BufferInputStream extends InputStream {
 
         byte[] result = new byte[len];
 
-        buffer.getBytes(position.get(), Math.min(len, buffer.length() - position.get()), result);
+        buffer.getBytes(position.get(), Math.min(position.get() + len, buffer.length()), result);
         System.arraycopy(result, 0, bytes, off, len);
 
         position.addAndGet(len);
