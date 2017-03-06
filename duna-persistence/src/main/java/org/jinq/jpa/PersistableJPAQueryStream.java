@@ -21,7 +21,7 @@ public class PersistableJPAQueryStream<T> extends QueryJPAJinqStream<T> implemen
 
     private static final Logger logger = Logger.getLogger(PersistableJPAQueryStream.class.getName());
 
-    private final JPAQueryComposer<T> jpaComposer;
+    protected final JPAQueryComposer<T> jpaComposer;
 
     public PersistableJPAQueryStream(QueryComposer<T> query) {
         super(query);

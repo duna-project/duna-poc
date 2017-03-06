@@ -97,4 +97,18 @@ public class JPAQueryStreamProvider extends JinqJPAStreamProvider implements Que
                 }
             });
     }
+
+    public <T> QueryStream<T> stream(Class<T> entityClass, QueryStream<?> source) {
+        if(!(source instanceof JPAQueryStream)) {
+            throw new IllegalArgumentException("Source must be a JPA stream.");
+        } else {
+            if (source instanceof PersistableJPAQueryStream) {
+                return this.streamAll(((PersistableJPAQueryStream)source).jpaComposer.em, entityClass);
+            } else if (source instanceof QueryJPAJinqStream) {
+                return this.streamAll(((QueryJPAJinqStream)source).jpaComposer.em, entityClass);
+            } else {
+                return this.stream(entityClass);
+            }
+        }
+    }
 }

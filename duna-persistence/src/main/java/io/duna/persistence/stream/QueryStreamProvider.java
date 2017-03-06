@@ -14,4 +14,6 @@ public interface QueryStreamProvider {
     void registerCustomTuple(Class<?> tupleType);
 
     <T> QueryStream<T> stream(Class<T> entityClass);
+
+    <T> QueryStream<T> stream(Class<T> entityClass, QueryStream<?> sourceStream);
 }
