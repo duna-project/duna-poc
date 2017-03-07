@@ -8,6 +8,7 @@
 package org.jinq.jpa;
 
 import io.duna.persistence.jpa.JPAQueryStream;
+import io.duna.persistence.stream.NonQueryStream;
 import io.duna.persistence.stream.QueryStream;
 import org.jinq.orm.stream.InQueryStreamSource;
 import org.jinq.orm.stream.JinqStream;
@@ -394,8 +395,8 @@ public class JPAQueryStreamWrapper<T> extends LazyWrappedStream<T> implements JP
 
     @Override
     public <V> V merge(V entity) {
-        if (wrapped instanceof JPAQueryStream) {
-            return ((JPAQueryStream<T>) wrapped).merge(entity);
+        if (wrapped instanceof QueryStream) {
+            return ((QueryStream<T>) wrapped).merge(entity);
         }
 
         return entity;

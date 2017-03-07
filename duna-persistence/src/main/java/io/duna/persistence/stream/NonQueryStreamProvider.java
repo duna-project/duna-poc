@@ -33,6 +33,11 @@ public class NonQueryStreamProvider implements QueryStreamProvider, InQueryStrea
         return new NonQueryStream<T>((Stream<T>) data.get(entityClass).stream(), this);
     }
 
+    @Override
+    public <T> QueryStream<T> stream(Class<T> entityClass, QueryStream<?> sourceStream) {
+        return this.stream(entityClass);
+    }
+
     @SuppressWarnings("unchecked")
     protected <T> Collection<T> getDataSource(Class<?> entityClass) {
         return (Collection<T>) data.getOrDefault(entityClass, ConcurrentHashMap.newKeySet());
