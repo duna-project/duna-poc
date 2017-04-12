@@ -7,11 +7,10 @@
  */
 package io.duna.http.service.handler;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import io.duna.core.DunaException;
 import io.duna.core.io.BufferInputStream;
 import io.duna.core.io.BufferOutputStream;
+import io.duna.core.service.LongOperation;
 import io.duna.core.util.Services;
 import io.duna.http.HttpResponseStatus;
 import io.duna.http.Parameter;
@@ -20,7 +19,8 @@ import io.duna.serialization.Json;
 import co.paralleluniverse.fibers.Suspendable;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.primitives.Primitives;
 import com.google.inject.assistedinject.Assisted;
@@ -28,6 +28,7 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.ReplyException;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.RoutingContext;
@@ -190,66 +191,74 @@ public class HttpJsonServiceHandler implements Handler<RoutingContext> {
             requestGenerator.flush();
             requestGenerator.close();
 
-            event.vertx().eventBus().<Buffer>send(serviceAddress, requestOutputStream.getBuffer(), serviceResponse -> {
-                if (serviceResponse.failed()) {
-                    handleReplyException(event, serviceResponse.cause());
-                    return;
-                }
+            DeliveryOptions deliveryOptions = new DeliveryOptions();
 
-                Class<?> wrapperReturnType = Primitives.wrap(targetMethod.getReturnType());
+            if (targetMethod.isAnnotationPresent(LongOperation.class)) {
+                deliveryOptions.setSendTimeout(300 * 1000);
+            }
 
-                if (Void.class.isAssignableFrom(wrapperReturnType)) {
-                    // TODO Maybe move this to before the event dispatching
-                    event.response().end();
-                }
+            event.vertx().eventBus().<Buffer>send(serviceAddress, requestOutputStream.getBuffer(),
+                deliveryOptions,
+                serviceResponse -> {
+                    if (serviceResponse.failed()) {
+                        handleReplyException(event, serviceResponse.cause());
+                        return;
+                    }
 
-                if (serviceResponse.result().body() != null && serviceResponse.result().body().length() > 0) {
-                    try {
-                        logger.finer(() -> "Received response from service: " + serviceAddress);
+                    Class<?> wrapperReturnType = Primitives.wrap(targetMethod.getReturnType());
 
-                        JsonParser parser = internalObjectMapper.getFactory()
-                                                                .createParser(serviceResponse.result()
-                                                                                             .body()
-                                                                                             .getBytes());
+                    if (Void.class.isAssignableFrom(wrapperReturnType)) {
+                        // TODO Maybe move this to before the event dispatching
+                        event.response().end();
+                    }
 
-                        Object result = parser.readValueAs(targetMethod.getReturnType());
+                    if (serviceResponse.result().body() != null && serviceResponse.result().body().length() > 0) {
+                        try {
+                            logger.finer(() -> "Received response from service: " + serviceAddress);
 
-                        event.response()
-                             .putHeader("content-type", "text/json")
-                             .putHeader("access-control-allow-origin", corsDomains)
-                             .setChunked(true);
+                            JsonParser parser = internalObjectMapper.getFactory()
+                                                                    .createParser(serviceResponse.result()
+                                                                                                 .body()
+                                                                                                 .getBytes());
 
-                        if (result instanceof Iterable) {
-                            // Serialize iterable items individually in order to reduce memory usage
-                            event.response().write("[");
+                            Object result = parser.readValueAs(targetMethod.getReturnType());
 
-                            Iterable<?> items = (Iterable<?>) result;
-                            boolean first = true;
-                            for (Object item : items) {
-                                if (!first) {
-                                    event.response().write(",");
+                            event.response()
+                                 .putHeader("content-type", "text/json")
+                                 .putHeader("access-control-allow-origin", corsDomains)
+                                 .setChunked(true);
+
+                            if (result instanceof Iterable) {
+                                // Serialize iterable items individually in order to reduce memory usage
+                                event.response().write("[");
+
+                                Iterable<?> items = (Iterable<?>) result;
+                                boolean first = true;
+                                for (Object item : items) {
+                                    if (!first) {
+                                        event.response().write(",");
+                                    }
+                                    first = false;
+
+                                    event.response().write(externalObjectMapper.writeValueAsString(item));
                                 }
-                                first = false;
 
-                                event.response().write(externalObjectMapper.writeValueAsString(item));
+                                event.response().write("]");
+                            } else {
+                                event.response().write(externalObjectMapper.writeValueAsString(result));
                             }
 
-                            event.response().write("]");
-                        } else {
-                            event.response().write(externalObjectMapper.writeValueAsString(result));
+                            event.response().end();
+                        } catch (IOException ex) {
+                            logger.log(Level.SEVERE, ex, () -> "Error while handling request from " + event.request().remoteAddress());
+                            event.response()
+                                .setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
+                                .end();
                         }
-
+                    } else {
                         event.response().end();
-                    } catch (IOException ex) {
-                        logger.log(Level.SEVERE, ex, () -> "Error while handling request from " + event.request().remoteAddress());
-                        event.response()
-                            .setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
-                            .end();
                     }
-                } else {
-                    event.response().end();
-                }
-            });
+                });
         } catch (IOException ex) {
             logger.log(Level.SEVERE, ex, () -> "Error while handling request from " + event.request().remoteAddress());
             event.response()

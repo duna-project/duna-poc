@@ -9,6 +9,7 @@ package io.duna.http.service;
 
 import io.duna.core.context.ClasspathScanner;
 import io.duna.core.service.InterfaceMapper;
+import io.duna.core.service.LongOperation;
 import io.duna.core.util.Services;
 import io.duna.extend.Port;
 import io.duna.http.HttpInterface;
@@ -181,7 +182,13 @@ public class HttpRouterVerticle extends SyncVerticle {
 
 //                    if (annotation.method() != io.duna.http.HttpMethod.GET) route.consumes("*/json");
 
-                    route.handler(fiberHandler(handlerFactory.create(contractClass, exposedMethod, annotation.path())));
+                    if (exposedMethod.isAnnotationPresent(LongOperation.class)) {
+                        route.blockingHandler(fiberHandler(handlerFactory.create(contractClass,
+                            exposedMethod, annotation.path())));
+                    } else {
+                        route.handler(fiberHandler(handlerFactory.create(contractClass,
+                            exposedMethod, annotation.path())));
+                    }
 
                     logger.fine(() -> "Registered " + method + " route " + annotation.path()
                         + " to " + Services.getInternalServiceAddress(exposedMethod));

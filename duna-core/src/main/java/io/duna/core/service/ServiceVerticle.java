@@ -12,6 +12,7 @@ import io.duna.core.util.Services;
 
 import co.paralleluniverse.fibers.Suspendable;
 import com.google.inject.assistedinject.Assisted;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.ext.sync.SyncVerticle;
 
 import javax.inject.Inject;
@@ -61,8 +62,18 @@ public class ServiceVerticle extends SyncVerticle {
                     + Services.getInternalServiceAddress(method);
 
                 logger.fine(() -> "Registering consumer at address " + serviceAddress);
-                vertx.eventBus().consumer(serviceAddress,
-                    fiberHandler(handlerFactory.create(serviceInstance, method)));
+
+                if (method.isAnnotationPresent(LongOperation.class)) {
+                    vertx.eventBus().<Buffer> consumer(serviceAddress,
+                        fiberHandler((e) -> vertx.executeBlocking((fut) -> {
+                            handlerFactory.create(serviceInstance, method).handle(e);
+                            fut.complete();
+                        }, (r) -> {})));
+                } else {
+                    vertx.eventBus().consumer(serviceAddress,
+                        fiberHandler(handlerFactory.create(serviceInstance, method)));
+                }
+
                 logger.finer(() -> "Consumer registered");
             }
 
