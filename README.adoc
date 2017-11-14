@@ -1,0 +1,50 @@
+== Duna Framework
+
+This project contains the proof-of-concept framework used at the
+Brazilian Federal Budget Office to convert its legacy monolith
+application, based on J2EE 1.4, into a modern microservices based
+architecture.
+
+This implementation uses Vert.x to manage handler registration
+and event delivery and Hazelcast to manage node discovery,
+addressing and consensus.
+
+=== Subprojects
+
+- `duna-core`: defines the building blocks of Duna. Exposes interfaces
+to declare service contracts and identify implementations;
+
+- `duna-annotations`: basic annotations used in service interfaces; used
+to identify service contracts, handler address and service dependencies;
+
+- `duna-cluster`: used to orchestrate services in a cluster by injecting
+remote proxies, registering services into the cluster manager, and routing
+events to service handlers;
+
+- `duna-gradle-plugin`: plugin used to assist in code generation;
+
+- `duna-http-port-api`: API used to declare exposed HTTP endpoints in
+services;
+
+- `duna-http-port`: creates an HTTP server whose endpoints are
+detected at runtime by annotations provided in `duna-http-port-api`;
+
+- `duna-persistence`: assists the creation of entity managers and
+database streams;
+
+- `duna-agent`: Java agent used to generate bytecode at runtime
+in order to implement and inject dynamic proxies to remote services.
+
+== How to Build
+
+This project depends on Java and Gradle and works better with Oracle
+JVM. To install Gradle, please refer to its
+http://gradle.org[documentation].
+
+Assuming Gradle and Java are available, to install the artifacts into
+your local maven repository, run this command:
+
+    $ gradle publishToMavenLocal
+
+== How to Use
+
