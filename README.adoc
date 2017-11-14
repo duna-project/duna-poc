@@ -48,3 +48,56 @@ your local maven repository, run this command:
 
 == How to Use
 
+Add a dependency to `duna-core` in your project. If you want your services
+to be clustered, add `duna-cluster` also:
+
+.build.gradle
+[source,groovy]
+----
+dependency {
+  compile 'io.duna:duna-core:0.4.4'
+  compile 'io.duna:duna-cluster:0.4.4' <1>
+}
+----
+<1> `duna-cluster` is required only if clustering support is needed.
+
+To create a service, you need to create an interface, containing the
+service operations and HTTP endpoints, and a class implementation:
+
+.EchoService.java
+[source,java]
+----
+@Contract
+public interface EchoService {
+    String echo(String shout);
+}
+----
+
+.EchoServiceImpl.java
+[source,java]
+----
+@Service
+public class EchoServiceImpl implements EchoService {
+
+    @Override
+    public String echo(String shout) {
+        return shout;
+    }
+}
+----
+
+To inject a service into another, you should annotate a field with
+`@javax.inject.Inject`.
+
+.ShoutServiceImpl.java
+[source,java]
+----
+public class ShoutServiceImpl extends ShoutService {
+    @Inject
+    private EchoService echoService;
+
+    public String shout(String message) {
+        return echoService.echo(message);
+    }
+}
+----
