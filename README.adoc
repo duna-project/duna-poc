@@ -5,6 +5,12 @@ Brazilian Federal Budget Office to convert its legacy monolith
 application, based on J2EE 1.4, into a modern microservices based
 architecture.
 
+The main motivation for implementing this framework instead of using
+some existing library is to provide a familiar programming interface
+(based on JAX-RS and EJB annotations),
+while leveraging the advantages of asynchronous I/O, green threads, and
+containerization.
+
 This implementation uses Vert.x to manage handler registration
 and event delivery and Hazelcast to manage node discovery,
 addressing and consensus.
