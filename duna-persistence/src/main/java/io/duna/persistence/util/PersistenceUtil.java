@@ -7,14 +7,12 @@
  */
 package io.duna.persistence.util;
 
-import io.duna.persistence.EntityManagerBinderModule;
-import io.duna.persistence.jpa.ContainerPersistenceUnitInfo;
-
 import com.google.common.base.CaseFormat;
+import com.mchange.v2.c3p0.ComboPooledDataSource;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
+import io.duna.persistence.EntityManagerBinderModule;
+import io.duna.persistence.jpa.ContainerPersistenceUnitInfo;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.io.IoBuilder;
 
@@ -101,21 +99,27 @@ public class PersistenceUtil {
                 }
             }
 
-            HikariConfig hikariConfig = new HikariConfig(properties);
+            ComboPooledDataSource dataSource = new ComboPooledDataSource();
+
+            if (dataSourceConfig.hasPath("driver-class")) {
+                try {
+                    dataSource.setDriverClass(dataSourceConfig.getString("driver-class"));
+                } catch (Exception e) {
+                    logger.severe(() -> "Error while configuring the data source: " + e.getMessage());
+                }
+            }
 
             if (dataSourceConfig.hasPath("connection-url")) {
-                hikariConfig.setJdbcUrl(dataSourceConfig.getString("connection-url"));
+                dataSource.setJdbcUrl(dataSourceConfig.getString("connection-url"));
             }
 
             if (dataSourceConfig.hasPath("username")) {
-                hikariConfig.setUsername(dataSourceConfig.getString("username"));
+                dataSource.setUser(dataSourceConfig.getString("username"));
             }
 
             if (dataSourceConfig.hasPath("password")) {
-                hikariConfig.setPassword(dataSourceConfig.getString("password"));
+                dataSource.setPassword(dataSourceConfig.getString("password"));
             }
-
-            HikariDataSource dataSource = new HikariDataSource(hikariConfig);
 
             try {
                 dataSource.setLogWriter(IoBuilder
